@@ -1,12 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="midnight_blue">#191970</color>
-    <color name="secondary_blue">#192F70</color>
     <color name="primary_blue">#12214E</color>
-    <color name="soft_blue">#CDDAFF</color>
-    <color name="light_blue">#9cb5ff</color>
-    <color name="accent_red">#F1232B</color>
-    <color name="purple">#9747FF</color>
     <color name="white">#FFFFFF</color>
     <color name="black">#000000</color>
 </resources>
