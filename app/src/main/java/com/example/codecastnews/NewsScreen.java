@@ -1,5 +1,6 @@
 package com.example.codecastnews;
 
+import android.content.Intent; // Import Intent
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
@@ -11,6 +12,7 @@ import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView; // Import CardView
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -51,6 +53,7 @@ public class NewsScreen extends AppCompatActivity {
     private DatabaseReference newsDatabase; // Reference to the "news" node in Firebase
 
     // Featured News Card UI elements
+    private CardView featuredNewsCard; // Add CardView for click listener
     private ImageView featuredNewsImage; // ImageView for the featured news article's image
     private TextView featuredNewsTitle; // TextView for the featured news article's title
     private TextView featuredNewsDate; // TextView for the featured news article's date
@@ -111,6 +114,7 @@ public class NewsScreen extends AppCompatActivity {
         newsRecyclerView.setAdapter(newsAdapter);
 
         // Initialize Featured News UI elements by finding them in the layout
+        featuredNewsCard = findViewById(R.id.featuredNewsCard); // Initialize the CardView
         featuredNewsImage = findViewById(R.id.featuredNewsImage);
         featuredNewsTitle = findViewById(R.id.featuredNewsTitle);
         featuredNewsDate = findViewById(R.id.featuredNewsDate);
@@ -179,13 +183,15 @@ public class NewsScreen extends AppCompatActivity {
 
         // Update UI based on whether a featured article was found
         if (featuredArticleForCategory != null) {
+            final NewsArticle articleToDisplay = featuredArticleForCategory; // Final variable for click listener
+
             // Set the title and date from the featured article
-            featuredNewsTitle.setText(featuredArticleForCategory.getTitle());
-            featuredNewsDate.setText("Date: " + featuredArticleForCategory.getDate());
+            featuredNewsTitle.setText(articleToDisplay.getTitle());
+            featuredNewsDate.setText("Date: " + articleToDisplay.getDate());
 
             // Get the resource ID of the image from the drawable folder using its name
             int featuredImageResId = getResources().getIdentifier(
-                    featuredArticleForCategory.getImageName(), // Image name from the article (e.g., "media")
+                    articleToDisplay.getImageName(), // Image name from the article (e.g., "media")
                     "drawable",                     // Look in the 'drawable' folder
                     getPackageName()                // Use the current application's package name
             );
@@ -200,13 +206,23 @@ public class NewsScreen extends AppCompatActivity {
             } else {
                 // If the image resource is not found, display a default "no image" placeholder
                 featuredNewsImage.setImageResource(R.drawable.no_image_available);
-                Log.w(TAG, "Featured image for " + categoryType + " not found: " + featuredArticleForCategory.getImageName());
+                Log.w(TAG, "Featured image for " + categoryType + " not found: " + articleToDisplay.getImageName());
             }
+
+            // Set OnClickListener for the featured news card
+            featuredNewsCard.setOnClickListener(v -> {
+                Intent intent = new Intent(NewsScreen.this, NewsDetailScreen.class);
+                intent.putExtra(NewsDetailScreen.EXTRA_NEWS_ARTICLE, articleToDisplay);
+                startActivity(intent);
+            });
+
         } else {
             // If no featured article is found for the current category, display a default message
             featuredNewsTitle.setText("No Featured News for " + capitalizeFirstLetter(categoryType));
             featuredNewsDate.setText(""); // Clear the date text
             featuredNewsImage.setImageResource(R.drawable.no_image_available); // Show a default "no image"
+            // Disable click listener if no featured article
+            featuredNewsCard.setOnClickListener(null);
         }
     }
 
@@ -312,5 +328,4 @@ public class NewsScreen extends AppCompatActivity {
             }
         });
     }
-    // The addDummyNewsToFirebase() method itself has been removed from this file.
 }
