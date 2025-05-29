@@ -1,6 +1,6 @@
 package com.example.codecastnews;
 
-import android.content.Intent; // Import Intent
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
@@ -12,7 +12,7 @@ import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.cardview.widget.CardView; // Import CardView
+import androidx.cardview.widget.CardView;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -36,7 +36,7 @@ import java.util.List;
  * NewsScreen Activity: Displays a list of news articles categorized by type (Academic, Sport, Event).
  * Fetches news data from Firebase Realtime Database.
  * Features a dynamic "featured news" card and a RecyclerView for general news.
- * Includes a bottom navigation bar for switching categories.
+ * Includes a bottom navigation bar for switching categories and handling navigation from NewsDetailScreen.
  */
 public class NewsScreen extends AppCompatActivity {
 
@@ -44,25 +44,25 @@ public class NewsScreen extends AppCompatActivity {
     private static final String TAG = "NewsScreen";
 
     // UI components declarations
-    private RecyclerView newsRecyclerView; // RecyclerView to display a list of news articles
-    private NewsAdapter newsAdapter; // Adapter for the RecyclerView
+    private RecyclerView newsRecyclerView;
+    private NewsAdapter newsAdapter;
     private List<NewsArticle> allNewsList; // Master list holding ALL news articles fetched from Firebase
     private List<NewsArticle> filteredNewsList; // List holding news articles filtered by the current type for RecyclerView
 
     // Firebase Database reference
-    private DatabaseReference newsDatabase; // Reference to the "news" node in Firebase
+    private DatabaseReference newsDatabase;
 
     // Featured News Card UI elements
-    private CardView featuredNewsCard; // Add CardView for click listener
-    private ImageView featuredNewsImage; // ImageView for the featured news article's image
-    private TextView featuredNewsTitle; // TextView for the featured news article's title
-    private TextView featuredNewsDate; // TextView for the featured news article's date
-    private TextView sectionTitleTextView; // TextView to display the title of the current news section (e.g., "Academic")
+    private CardView featuredNewsCard;
+    private ImageView featuredNewsImage;
+    private TextView featuredNewsTitle;
+    private TextView featuredNewsDate;
+    private TextView sectionTitleTextView;
 
     // Bottom Navigation Tab Layouts and their child views
-    private LinearLayout navAcademic, navSport, navEvent; // Layouts for each navigation tab
-    private ImageView iconAcademic, iconSport, iconEvent; // Icons for each navigation tab
-    private TextView textAcademic, textSport, textEvent; // Text labels for each navigation tab
+    private LinearLayout navAcademic, navSport, navEvent;
+    private ImageView iconAcademic, iconSport, iconEvent;
+    private TextView textAcademic, textSport, textEvent;
 
     // State Variable: Keeps track of the currently selected news category
     private String currentNewsType = "academic"; // Default selected news category is "academic"
@@ -71,20 +71,12 @@ public class NewsScreen extends AppCompatActivity {
     private final int SELECTED_COLOR = Color.WHITE; // Color for selected tab elements
     private final int UNSELECTED_COLOR = Color.parseColor("#B0BEC5"); // Color for unselected tab elements (light grey)
 
-    /**
-     * Called when the activity is first created.
-     * Initializes UI components, sets up Firebase, and fetches data.
-     * @param savedInstanceState If the activity is being re-initialized after
-     * previously being shut down then this Bundle contains the data it most
-     * recently supplied in onSaveInstanceState(Bundle). Otherwise it is null.
-     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this); // Enable full-screen edge-to-edge display
-        setContentView(R.layout.activity_news_screen); // Set the layout for this activity
+        EdgeToEdge.enable(this);
+        setContentView(R.layout.activity_news_screen);
 
-        // Apply system window insets to adjust padding for status and navigation bars
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
@@ -92,29 +84,23 @@ public class NewsScreen extends AppCompatActivity {
         });
 
         // Initialize Firebase Database Persistence
-        // Enables offline capabilities by caching data locally.
-        // Needs to be called only once per application instance.
         try {
             FirebaseDatabase.getInstance().setPersistenceEnabled(true);
         } catch (Exception e) {
-            // Log an error if persistence fails (e.g., already called elsewhere)
             Log.e(TAG, "Error enabling Firebase persistence. This usually means it was already called: " + e.getMessage());
         }
-        // Get a reference to the "news" node in your Firebase Realtime Database
         newsDatabase = FirebaseDatabase.getInstance().getReference("news");
 
         // Initialize RecyclerView and its components
-        newsRecyclerView = findViewById(R.id.newsRecyclerView); // Get RecyclerView from layout
-        // Set a LinearLayoutManager to arrange items in a vertical list
+        newsRecyclerView = findViewById(R.id.newsRecyclerView);
         newsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        allNewsList = new ArrayList<>(); // Initialize the master list of all news articles
-        filteredNewsList = new ArrayList<>(); // Initialize the list for filtered news
-        // Create and set the adapter for the RecyclerView
+        allNewsList = new ArrayList<>();
+        filteredNewsList = new ArrayList<>();
         newsAdapter = new NewsAdapter(this, filteredNewsList);
         newsRecyclerView.setAdapter(newsAdapter);
 
-        // Initialize Featured News UI elements by finding them in the layout
-        featuredNewsCard = findViewById(R.id.featuredNewsCard); // Initialize the CardView
+        // Initialize Featured News UI elements
+        featuredNewsCard = findViewById(R.id.featuredNewsCard);
         featuredNewsImage = findViewById(R.id.featuredNewsImage);
         featuredNewsTitle = findViewById(R.id.featuredNewsTitle);
         featuredNewsDate = findViewById(R.id.featuredNewsDate);
@@ -134,22 +120,68 @@ public class NewsScreen extends AppCompatActivity {
         textEvent = findViewById(R.id.textEvent);
 
         // Set Click Listeners for Bottom Navigation Tabs
-        // When a tab is clicked, call selectTab() with its corresponding type
         navAcademic.setOnClickListener(v -> selectTab("academic"));
         navSport.setOnClickListener(v -> selectTab("sport"));
         navEvent.setOnClickListener(v -> selectTab("event"));
 
         // Fetch news data from Firebase when the activity starts
         fetchNewsFromFirebase();
-
-        // The addDummyNewsToFirebase() method call has been removed from here
-        // as the data is already in Firebase.
     }
+
+    /**
+     * Called when the activity receives a new Intent. This happens if the activity is already
+     * running in the current task and a new Intent is delivered to it (e.g., from NewsDetailScreen
+     * with FLAG_ACTIVITY_SINGLE_TOP).
+     *
+     * @param intent The new intent that was started for the activity.
+     */
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent); // Set the new intent as the activity's current intent
+        handleIntent(intent); // Process the new intent
+    }
+
+    /**
+     * Called when the activity is becoming visible to the user.
+     * We call handleIntent here to ensure that if NewsScreen is brought to the foreground
+     * (e.g., from background), it processes any pending category selection from the intent.
+     */
+    @Override
+    protected void onResume() {
+        super.onResume();
+        handleIntent(getIntent()); // Process the intent when the activity resumes
+    }
+
+    /**
+     * Handles the incoming intent to select the correct tab if a category is provided.
+     * This method is crucial for navigating back from NewsDetailScreen to a specific tab.
+     *
+     * @param intent The intent that started or resumed this activity.
+     */
+    private void handleIntent(Intent intent) {
+        // Check if the intent contains the EXTRA_SELECTED_CATEGORY from NewsDetailScreen
+        if (intent != null && intent.hasExtra(NewsDetailScreen.EXTRA_SELECTED_CATEGORY)) {
+            String category = intent.getStringExtra(NewsDetailScreen.EXTRA_SELECTED_CATEGORY);
+            if (category != null && !category.isEmpty()) {
+                selectTab(category); // Select the tab corresponding to the received category
+                // Clear the extra from the intent to prevent it from being re-processed
+                // if the activity is resumed again without a new intent.
+                intent.removeExtra(NewsDetailScreen.EXTRA_SELECTED_CATEGORY);
+            }
+        } else {
+            // If no specific category is passed, ensure the default or last selected tab is active.
+            // This covers cases where NewsScreen is launched normally or resumed without a category intent.
+            selectTab(currentNewsType);
+        }
+    }
+
 
     /**
      * Handles the selection of a navigation tab.
      * Updates the UI (section title, tab colors), finds and displays the featured article
      * for the selected category, and filters the general news list for the RecyclerView.
+     *
      * @param type The type of news to display ("academic", "sport", "event").
      */
     private void selectTab(String type) {
@@ -169,21 +201,22 @@ public class NewsScreen extends AppCompatActivity {
      * Finds the single article marked as featured for the given category from `allNewsList`
      * and updates the `featuredNewsCard` UI elements (image, title, date).
      * If no featured article is found for the category, displays a default "No Featured News" message.
+     *
      * @param categoryType The category to find the featured article for (e.g., "academic").
      */
     private void updateFeaturedNewsCard(String categoryType) {
-        NewsArticle featuredArticleForCategory = null; // Variable to hold the found featured article
+        NewsArticle featuredArticleForCategory = null;
         for (NewsArticle article : allNewsList) {
             // Check if the article matches the current category AND is marked as featured for that category
             if (categoryType.equalsIgnoreCase(article.getType()) && article.isFeaturedForCategory()) {
-                featuredArticleForCategory = article; // Found the featured article
-                break; // Exit loop once found, as there should only be one featured per category
+                featuredArticleForCategory = article;
+                break;
             }
         }
 
         // Update UI based on whether a featured article was found
         if (featuredArticleForCategory != null) {
-            final NewsArticle articleToDisplay = featuredArticleForCategory; // Final variable for click listener
+            final NewsArticle articleToDisplay = featuredArticleForCategory;
 
             // Set the title and date from the featured article
             featuredNewsTitle.setText(articleToDisplay.getTitle());
@@ -191,25 +224,25 @@ public class NewsScreen extends AppCompatActivity {
 
             // Get the resource ID of the image from the drawable folder using its name
             int featuredImageResId = getResources().getIdentifier(
-                    articleToDisplay.getImageName(), // Image name from the article (e.g., "media")
-                    "drawable",                     // Look in the 'drawable' folder
-                    getPackageName()                // Use the current application's package name
+                    articleToDisplay.getImageName(),
+                    "drawable",
+                    getPackageName()
             );
 
             // Load the image using Glide for efficient image loading
-            if (featuredImageResId != 0) { // If a valid drawable resource ID is found
-                Glide.with(NewsScreen.this) // Context for Glide
-                        .load(featuredImageResId) // The image resource to load
-                        .placeholder(R.drawable.placeholder_image) // Placeholder while loading (optional)
-                        .error(R.drawable.error_image)         // Image to show if loading fails (optional)
-                        .into(featuredNewsImage); // Target ImageView
+            if (featuredImageResId != 0) {
+                Glide.with(NewsScreen.this)
+                        .load(featuredImageResId)
+                        .placeholder(R.drawable.placeholder_image)
+                        .error(R.drawable.error_image)
+                        .into(featuredNewsImage);
             } else {
                 // If the image resource is not found, display a default "no image" placeholder
                 featuredNewsImage.setImageResource(R.drawable.no_image_available);
                 Log.w(TAG, "Featured image for " + categoryType + " not found: " + articleToDisplay.getImageName());
             }
 
-            // Set OnClickListener for the featured news card
+            // Set OnClickListener for the featured news card to open NewsDetailScreen
             featuredNewsCard.setOnClickListener(v -> {
                 Intent intent = new Intent(NewsScreen.this, NewsDetailScreen.class);
                 intent.putExtra(NewsDetailScreen.EXTRA_NEWS_ARTICLE, articleToDisplay);
@@ -219,10 +252,9 @@ public class NewsScreen extends AppCompatActivity {
         } else {
             // If no featured article is found for the current category, display a default message
             featuredNewsTitle.setText("No Featured News for " + capitalizeFirstLetter(categoryType));
-            featuredNewsDate.setText(""); // Clear the date text
-            featuredNewsImage.setImageResource(R.drawable.no_image_available); // Show a default "no image"
-            // Disable click listener if no featured article
-            featuredNewsCard.setOnClickListener(null);
+            featuredNewsDate.setText("");
+            featuredNewsImage.setImageResource(R.drawable.no_image_available);
+            featuredNewsCard.setOnClickListener(null); // Disable click listener
         }
     }
 
@@ -231,15 +263,16 @@ public class NewsScreen extends AppCompatActivity {
      * Filters the 'allNewsList' based on the given news type.
      * Only articles matching the type and NOT marked as 'isFeaturedForCategory' are added
      * to `filteredNewsList`, which then updates the RecyclerView.
+     *
      * @param type The type of news to display (e.g., "academic").
      */
     private void filterNewsByType(String type) {
-        filteredNewsList.clear(); // Clear the previous filtered list
+        filteredNewsList.clear();
 
         // Iterate through all news articles
         for (NewsArticle article : allNewsList) {
             // Add article to filtered list if its type matches the selected type
-            // AND it is NOT a featured article for its category (to avoid duplication with the featured card)
+            // AND it is NOT a featured article for its category
             if (type.equalsIgnoreCase(article.getType()) && !article.isFeaturedForCategory()) {
                 filteredNewsList.add(article);
             }
@@ -251,6 +284,7 @@ public class NewsScreen extends AppCompatActivity {
     /**
      * Resets all bottom navigation tab icons and text colors to their unselected state,
      * and then highlights the selected tab's icon and text.
+     *
      * @param selectedType The type of tab that is currently selected (e.g., "academic").
      */
     private void setSelectedTabColor(String selectedType) {
@@ -265,8 +299,8 @@ public class NewsScreen extends AppCompatActivity {
         // Set the selected tab's icon and text color to the selected state based on type
         switch (selectedType) {
             case "academic":
-                iconAcademic.setColorFilter(SELECTED_COLOR); // Set icon color to white
-                textAcademic.setTextColor(SELECTED_COLOR); // Set text color to white
+                iconAcademic.setColorFilter(SELECTED_COLOR);
+                textAcademic.setTextColor(SELECTED_COLOR);
                 break;
             case "sport":
                 iconSport.setColorFilter(SELECTED_COLOR);
@@ -282,14 +316,14 @@ public class NewsScreen extends AppCompatActivity {
     /**
      * Helper method to capitalize the first letter of a given string.
      * Used for display titles like "Academic", "Sport", "Event".
+     *
      * @param text The input string.
      * @return The string with its first letter capitalized.
      */
     private String capitalizeFirstLetter(String text) {
         if (text == null || text.isEmpty()) {
-            return text; // Return as is if null or empty
+            return text;
         }
-        // Convert first character to uppercase and append the rest of the string in lowercase
         return text.substring(0, 1).toUpperCase() + text.substring(1).toLowerCase();
     }
 
@@ -302,9 +336,9 @@ public class NewsScreen extends AppCompatActivity {
         newsDatabase.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                allNewsList.clear(); // Clear the master list to prevent duplicate data when data changes
+                allNewsList.clear(); // Clear the master list to prevent duplicate data
 
-                // Iterate through each child node (which represents a NewsArticle) in the "news" data
+                // Iterate through each child node (which represents a NewsArticle)
                 for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
                     // Deserialize the Firebase dataSnapshot into a NewsArticle object
                     NewsArticle article = postSnapshot.getValue(NewsArticle.class);
@@ -313,10 +347,9 @@ public class NewsScreen extends AppCompatActivity {
                         allNewsList.add(article); // Add the article to the master list
                     }
                 }
-                // After fetching all news, call selectTab to initialize the featured card
-                // and RecyclerView for the default 'currentNewsType' (initially "academic").
-                // This ensures the UI is populated as soon as data is available.
-                selectTab(currentNewsType);
+                // After fetching all news, call handleIntent to process any incoming category selection
+                // This ensures the UI is populated correctly based on the intent after data is available.
+                handleIntent(getIntent());
             }
 
             @Override
@@ -324,7 +357,7 @@ public class NewsScreen extends AppCompatActivity {
                 // Handle any errors that occur during data fetching from Firebase
                 Log.w(TAG, "Failed to load news from Firebase: " + databaseError.getMessage(), databaseError.toException());
                 Toast.makeText(NewsScreen.this, "Failed to load news: " + databaseError.getMessage(),
-                        Toast.LENGTH_SHORT).show(); // Display a short error message to the user
+                        Toast.LENGTH_SHORT).show();
             }
         });
     }

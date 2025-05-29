@@ -41,7 +41,7 @@
             android:layout_width="32dp"
             android:layout_height="32dp"
             android:src="@drawable/generic_avatar"
-            android:tint="@android:color/white"
+
             android:contentDescription="User Profile" />
 
     </LinearLayout>
