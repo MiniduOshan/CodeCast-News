@@ -29,6 +29,7 @@ public class NewsDetailScreen extends AppCompatActivity {
     private TextView detailNewsTitle;
     private TextView detailNewsDate;
     private TextView detailNewsContent;
+    private ImageView profileIcon; // Declaring profileIcon
 
     // Declare your LinearLayouts for the bottom navigation tabs
     private LinearLayout navAcademic, navSport, navEvent;
@@ -50,6 +51,7 @@ public class NewsDetailScreen extends AppCompatActivity {
         detailNewsTitle = findViewById(R.id.detailNewsTitle);
         detailNewsDate = findViewById(R.id.detailNewsDate);
         detailNewsContent = findViewById(R.id.detailNewsContent);
+        profileIcon = findViewById(R.id.profileIcon); // Initialize profileIcon here
 
         // Initialize bottom navigation tabs by finding their IDs in activity_news_detail.xml
         navAcademic = findViewById(R.id.navAcademic);
@@ -61,6 +63,12 @@ public class NewsDetailScreen extends AppCompatActivity {
         navAcademic.setOnClickListener(v -> navigateToNewsScreen("academic"));
         navSport.setOnClickListener(v -> navigateToNewsScreen("sport"));
         navEvent.setOnClickListener(v -> navigateToNewsScreen("event"));
+
+        // Add the click listener for the profileIcon here
+        profileIcon.setOnClickListener(v -> {
+            Intent intent = new Intent(NewsDetailScreen.this, SettingScreen.class);
+            startActivity(intent);
+        });
 
         // Get the NewsArticle object from the Intent that started this activity
         NewsArticle article = (NewsArticle) getIntent().getSerializableExtra(EXTRA_NEWS_ARTICLE);

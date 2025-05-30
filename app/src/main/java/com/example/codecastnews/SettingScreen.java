@@ -1,6 +1,7 @@
 package com.example.codecastnews;
 
 import android.os.Bundle;
+import android.widget.ImageView; // Import ImageView
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -21,9 +22,13 @@ public class SettingScreen extends AppCompatActivity {
             return insets;
         });
 
-        // You can add logic for button clicks here if needed.
-        // For example:
-        // findViewById(R.id.backButton).setOnClickListener(v -> finish());
-        // findViewById(R.id.accountButton).setOnClickListener(v -> { /* navigate to Account screen */ });
+        // Find the backButton by its ID
+        ImageView backButton = findViewById(R.id.backButton);
+
+        // Set an OnClickListener for the backButton
+        backButton.setOnClickListener(v -> {
+            // Call finish() to close the current activity and go back to the previous one
+            finish();
+        });
     }
 }

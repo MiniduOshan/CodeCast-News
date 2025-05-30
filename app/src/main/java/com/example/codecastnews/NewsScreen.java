@@ -58,6 +58,7 @@ public class NewsScreen extends AppCompatActivity {
     private TextView featuredNewsTitle;
     private TextView featuredNewsDate;
     private TextView sectionTitleTextView;
+    private ImageView profileIcon; // Declaring profileIcon
 
     // Bottom Navigation Tab Layouts and their child views
     private LinearLayout navAcademic, navSport, navEvent;
@@ -105,6 +106,13 @@ public class NewsScreen extends AppCompatActivity {
         featuredNewsTitle = findViewById(R.id.featuredNewsTitle);
         featuredNewsDate = findViewById(R.id.featuredNewsDate);
         sectionTitleTextView = findViewById(R.id.sectionTitleTextView);
+        profileIcon = findViewById(R.id.profileIcon); // Initialize profileIcon
+
+        // Set OnClickListener for the profileIcon to open UserProfile
+        profileIcon.setOnClickListener(v -> {
+            Intent intent = new Intent(NewsScreen.this, SettingScreen.class);
+            startActivity(intent);
+        });
 
         // Initialize Bottom Navigation Tab Layouts and their icons/texts
         navAcademic = findViewById(R.id.navAcademic);
