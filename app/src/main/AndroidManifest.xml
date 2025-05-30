@@ -22,6 +22,9 @@
             android:name=".SettingScreen"
             android:exported="false" />
         <activity
+            android:name=".DevInfoScreen"
+            android:exported="false" />
+        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
