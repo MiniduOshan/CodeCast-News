@@ -314,13 +314,13 @@
                 android:padding="16dp">
 
                 <ImageView
-                    android:layout_width="wrap_content"
+                    android:id="@+id/aboutUsCup"      android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     app:srcCompat="@drawable/cup"
                     tools:ignore="ContentDescription" />
 
                 <TextView
-                    android:layout_width="0dp"
+                    android:id="@+id/aboutUsText"     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
                     android:layout_weight="1"
@@ -329,7 +329,7 @@
                     android:textSize="16sp" />
 
                 <ImageView
-                    android:layout_width="wrap_content"
+                    android:id="@+id/aboutUsArrow"    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     app:srcCompat="@drawable/navigate_next"
                     tools:ignore="ContentDescription" />
