@@ -1,24 +1,35 @@
 package com.example.codecastnews;
 
-import android.content.Intent; // Import Intent for navigation
+import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;    // Import View for OnClickListener
-import android.widget.Button; // Import Button
-import android.widget.TextView; // Import TextView
+import android.text.TextUtils;
+import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+
 public class SignUpScreen extends AppCompatActivity {
 
-    // Declare the main Sign Up button
-    private Button buttonSignUp; // Corresponds to android:id="@+id/buttonSignUp" in XML
+    private EditText editTextEmail, editTextPassword, editTextConfirmPassword;
+    private Button buttonSignUp, buttonSignUpGoogle; // Google button is in XML, keeping here for consistency even if not directly used for Firebase Google auth here
+    private TextView textViewSignIn;
 
-    // Declare the "SIGN IN" TextView
-    private TextView textViewSignIn; // Corresponds to android:id="@+id/textViewSignIn" in XML
+    private FirebaseAuth mAuth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,39 +43,90 @@ public class SignUpScreen extends AppCompatActivity {
             return insets;
         });
 
-        // Initialize the main Sign Up button from your layout
-        buttonSignUp = findViewById(R.id.buttonSignUp);
+        // Initialize Firebase Auth
+        mAuth = FirebaseAuth.getInstance();
 
-        // Set an OnClickListener for the main Sign Up button
+        // Initialize UI elements
+        editTextEmail = findViewById(R.id.editTextEmail);
+        editTextPassword = findViewById(R.id.editTextPassword);
+        editTextConfirmPassword = findViewById(R.id.editTextConfirmPassword);
+        buttonSignUp = findViewById(R.id.buttonSignUp);
+        buttonSignUpGoogle = findViewById(R.id.buttonSignUpGoogle); // You might want to handle Google Sign-Up similarly to Sign-In, or direct them to Sign-In
+        textViewSignIn = findViewById(R.id.textViewSignIn);
+
+        // Set OnClickListener for the main Sign Up button (Email/Password)
         buttonSignUp.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // For demonstration, clicking "SIGN UP" will also go to SignInScreen.
-                // In a real app, this would typically involve user registration logic
-                // and then navigate to a different screen (e.g., NewsScreen or back to SignInScreen).
-                Intent intent = new Intent(SignUpScreen.this, SignInScreen.class);
-                startActivity(intent);
-                // Optional: finish() this activity if you don't want the user to return to SignUpScreen
-                // after a successful sign-up (e.g., if they are immediately logged in).
-                // finish();
+                registerUser();
             }
         });
 
-        // Initialize the "SIGN IN" TextView from your layout
-        textViewSignIn = findViewById(R.id.textViewSignIn);
-
-        // Set an OnClickListener for the "SIGN IN" TextView
+        // Set OnClickListener for "SIGN IN" TextView
         textViewSignIn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Create an Intent to start the SignInScreen activity
                 Intent intent = new Intent(SignUpScreen.this, SignInScreen.class);
-                startActivity(intent); // Start the SignInScreen activity
+                startActivity(intent);
+                finish(); // Finish SignUpScreen
+            }
+        });
 
-                // Finish this SignUpScreen so the user cannot go back to it
-                // after choosing to sign in from the sign-up page.
+        // Optional: Handle Google Sign-Up button. For simplicity, we'll direct to SignInScreen
+        // and let them sign in with Google there, or you can implement direct Google sign-up here.
+        buttonSignUpGoogle.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(SignUpScreen.this, "Please use 'Sign In with Google' on the Sign In page.", Toast.LENGTH_LONG).show();
+                Intent intent = new Intent(SignUpScreen.this, SignInScreen.class);
+                startActivity(intent);
                 finish();
             }
         });
+    }
+
+    private void registerUser() {
+        String email = editTextEmail.getText().toString().trim();
+        String password = editTextPassword.getText().toString().trim();
+        String confirmPassword = editTextConfirmPassword.getText().toString().trim();
+
+        if (TextUtils.isEmpty(email)) {
+            editTextEmail.setError("Email is required.");
+            return;
+        }
+        if (TextUtils.isEmpty(password)) {
+            editTextPassword.setError("Password is required.");
+            return;
+        }
+        if (password.length() < 6) {
+            editTextPassword.setError("Password must be at least 6 characters.");
+            return;
+        }
+        if (!password.equals(confirmPassword)) {
+            editTextConfirmPassword.setError("Passwords do not match.");
+            return;
+        }
+
+        mAuth.createUserWithEmailAndPassword(email, password)
+                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        if (task.isSuccessful()) {
+                            // Sign in success, update UI with the signed-in user's information
+                            Log.d("SignUpScreen", "createUserWithEmail:success");
+                            FirebaseUser user = mAuth.getCurrentUser();
+                            Toast.makeText(SignUpScreen.this, "Account created successfully.", Toast.LENGTH_SHORT).show();
+                            // After successful registration, navigate to SignInScreen
+                            Intent intent = new Intent(SignUpScreen.this, SignInScreen.class);
+                            startActivity(intent);
+                            finish(); // Finish SignUpScreen so user can't go back
+                        } else {
+                            // If sign in fails, display a message to the user.
+                            Log.w("SignUpScreen", "createUserWithEmail:failure", task.getException());
+                            Toast.makeText(SignUpScreen.this, "Authentication failed: " + task.getException().getMessage(),
+                                    Toast.LENGTH_LONG).show();
+                        }
+                    }
+                });
     }
 }

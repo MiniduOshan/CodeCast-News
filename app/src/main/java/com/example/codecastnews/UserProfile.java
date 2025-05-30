@@ -1,5 +1,6 @@
 package com.example.codecastnews;
 
+import android.content.Intent; // Import for Intent
 import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
@@ -13,6 +14,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.material.button.MaterialButton;
+import com.google.firebase.auth.FirebaseAuth; // Import for Firebase Auth (if you're using it for sign out)
 
 // Import statements for your dialogs from the new package
 import com.example.codecastnews.dialogs.ChangePasswordDialogFragment;
@@ -35,6 +37,9 @@ public class UserProfile extends AppCompatActivity implements
     private MaterialButton signOutButton;
     private ImageView backArrow;
 
+    // Optional: If you're using Firebase for authentication, declare FirebaseAuth
+    private FirebaseAuth mAuth;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -46,6 +51,9 @@ public class UserProfile extends AppCompatActivity implements
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+
+        // Initialize Firebase Auth (if used)
+        mAuth = FirebaseAuth.getInstance();
 
         // Initialize UI elements
         nameEditText = findViewById(R.id.nameEditText);
@@ -161,7 +169,17 @@ public class UserProfile extends AppCompatActivity implements
     @Override
     public void onSignOutConfirm() {
         Toast.makeText(this, "Signing out...", Toast.LENGTH_SHORT).show();
-        // Implement your actual sign-out logic here (clear session, navigate to login)
-        finish(); // For demonstration, simply finishes the current activity
+
+        // Implement your actual sign-out logic here.
+        // If using Firebase Authentication:
+        if (mAuth != null) {
+            mAuth.signOut();
+        }
+
+        // Redirect to SignInScreen and clear the back stack
+        Intent intent = new Intent(UserProfile.this, SignInScreen.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish(); // Finish the current UserProfile activity
     }
 }
