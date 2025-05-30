@@ -19,6 +19,9 @@
             android:name=".UserProfile"
             android:exported="false" />
         <activity
+            android:name=".SettingScreen"
+            android:exported="false" />
+        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
