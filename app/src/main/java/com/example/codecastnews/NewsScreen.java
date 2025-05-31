@@ -59,6 +59,7 @@ public class NewsScreen extends AppCompatActivity {
     private TextView featuredNewsDate;
     private TextView sectionTitleTextView;
     private ImageView profileIcon; // Declaring profileIcon
+    private ImageView featuredNewsShare; // Declaring share icon
 
     // Bottom Navigation Tab Layouts and their child views
     private LinearLayout navAcademic, navSport, navEvent;
@@ -107,11 +108,38 @@ public class NewsScreen extends AppCompatActivity {
         featuredNewsDate = findViewById(R.id.featuredNewsDate);
         sectionTitleTextView = findViewById(R.id.sectionTitleTextView);
         profileIcon = findViewById(R.id.profileIcon); // Initialize profileIcon
+        featuredNewsShare = findViewById(R.id.featuredNewsShare); // Initialize share icon
 
         // Set OnClickListener for the profileIcon to open UserProfile
         profileIcon.setOnClickListener(v -> {
             Intent intent = new Intent(NewsScreen.this, SettingScreen.class);
             startActivity(intent);
+        });
+
+        // Set click listener for share icon
+        featuredNewsShare.setOnClickListener(v -> {
+            // Find the featured article for the current category
+            NewsArticle featuredArticle = null;
+            for (NewsArticle article : allNewsList) {
+                if (currentNewsType.equalsIgnoreCase(article.getType()) && article.isFeaturedForCategory()) {
+                    featuredArticle = article;
+                    break;
+                }
+            }
+            if (featuredArticle != null) {
+                Intent shareIntent = new Intent(Intent.ACTION_SEND);
+                shareIntent.setType("text/plain");
+                shareIntent.putExtra(Intent.EXTRA_SUBJECT, featuredArticle.getTitle());
+                shareIntent.putExtra(Intent.EXTRA_TEXT, featuredArticle.getTitle() + "\n\n" + featuredArticle.getDescription());
+                try {
+                    startActivity(Intent.createChooser(shareIntent, "Share Featured News"));
+                } catch (Exception e) {
+                    Toast.makeText(this, "Error sharing article", Toast.LENGTH_SHORT).show();
+                    Log.e(TAG, "Share error: " + e.getMessage());
+                }
+            } else {
+                Toast.makeText(this, "No featured article to share", Toast.LENGTH_SHORT).show();
+            }
         });
 
         // Initialize Bottom Navigation Tab Layouts and their icons/texts
@@ -183,7 +211,6 @@ public class NewsScreen extends AppCompatActivity {
             selectTab(currentNewsType);
         }
     }
-
 
     /**
      * Handles the selection of a navigation tab.
@@ -265,7 +292,6 @@ public class NewsScreen extends AppCompatActivity {
             featuredNewsCard.setOnClickListener(null); // Disable click listener
         }
     }
-
 
     /**
      * Filters the 'allNewsList' based on the given news type.

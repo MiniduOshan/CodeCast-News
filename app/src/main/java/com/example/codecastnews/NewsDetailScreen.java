@@ -4,7 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.ImageView;
-import android.widget.LinearLayout; // Import LinearLayout
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
@@ -12,6 +12,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
+import androidx.core.widget.ImageViewCompat; // Added for compatibility
 
 import com.bumptech.glide.Glide;
 import com.example.codecastnews.models.NewsArticle;
@@ -24,12 +27,15 @@ public class NewsDetailScreen extends AppCompatActivity {
     // Define a new extra key for the selected category when returning to NewsScreen
     public static final String EXTRA_SELECTED_CATEGORY = "extra_selected_category";
 
-
     private ImageView detailNewsImage;
     private TextView detailNewsTitle;
     private TextView detailNewsDate;
     private TextView detailNewsContent;
     private ImageView profileIcon; // Declaring profileIcon
+    // Declare ImageView variables for share and like icons
+    private ImageView iconShare;
+    private ImageView iconHeart;
+    private boolean isLiked = false; // Track like state
 
     // Declare your LinearLayouts for the bottom navigation tabs
     private LinearLayout navAcademic, navSport, navEvent;
@@ -53,6 +59,10 @@ public class NewsDetailScreen extends AppCompatActivity {
         detailNewsContent = findViewById(R.id.detailNewsContent);
         profileIcon = findViewById(R.id.profileIcon); // Initialize profileIcon here
 
+        // Initialize share and like icons
+        iconShare = findViewById(R.id.iconShare);
+        iconHeart = findViewById(R.id.iconHeart);
+
         // Initialize bottom navigation tabs by finding their IDs in activity_news_detail.xml
         navAcademic = findViewById(R.id.navAcademic);
         navSport = findViewById(R.id.navSport);
@@ -68,6 +78,39 @@ public class NewsDetailScreen extends AppCompatActivity {
         profileIcon.setOnClickListener(v -> {
             Intent intent = new Intent(NewsDetailScreen.this, SettingScreen.class);
             startActivity(intent);
+        });
+
+        // Set click listener for share icon
+        iconShare.setOnClickListener(v -> {
+            NewsArticle article = (NewsArticle) getIntent().getSerializableExtra(EXTRA_NEWS_ARTICLE);
+            if (article != null) {
+                Intent shareIntent = new Intent(Intent.ACTION_SEND);
+                shareIntent.setType("text/plain");
+                shareIntent.putExtra(Intent.EXTRA_SUBJECT, article.getTitle());
+                shareIntent.putExtra(Intent.EXTRA_TEXT, article.getTitle() + "\n\n" + article.getDescription());
+                try {
+                    startActivity(Intent.createChooser(shareIntent, "Share News Article"));
+                } catch (Exception e) {
+                    Toast.makeText(this, "Error sharing article", Toast.LENGTH_SHORT).show();
+                    Log.e(TAG, "Share error: " + e.getMessage());
+                }
+            } else {
+                Toast.makeText(this, "No article data to share", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        // Set click listener for like icon
+        iconHeart.setOnClickListener(v -> {
+            isLiked = !isLiked; // Toggle like state
+            if (isLiked) {
+                iconHeart.setImageResource(R.drawable.ic_heart_filled); // Use filled heart drawable
+                ImageViewCompat.setImageTintList(iconHeart, null); // Remove tint to show filled heart color
+                Toast.makeText(this, "Article liked!", Toast.LENGTH_SHORT).show();
+            } else {
+                iconHeart.setImageResource(R.drawable.ic_heart); // Use outline heart drawable
+                ImageViewCompat.setImageTintList(iconHeart, ColorStateList.valueOf(Color.parseColor("#B0BEC5"))); // Restore tint
+                Toast.makeText(this, "Article unliked!", Toast.LENGTH_SHORT).show();
+            }
         });
 
         // Get the NewsArticle object from the Intent that started this activity

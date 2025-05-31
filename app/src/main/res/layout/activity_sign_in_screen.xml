@@ -10,8 +10,8 @@
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/clSignInPanel"
-        android:layout_width="380dp"
-        android:layout_height="659dp"
+        android:layout_width="347dp"
+        android:layout_height="664dp"
         android:background="@drawable/rounded_panel_background"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -64,8 +64,8 @@
             android:layout_marginStart="32dp"
             android:layout_marginTop="204dp"
             android:layout_marginEnd="32dp"
-            android:backgroundTint="@color/midnight_blue"
             android:background="@drawable/rounded_edittext_background"
+            android:backgroundTint="@color/midnight_blue"
             android:hint="Email"
             android:inputType="textEmailAddress"
             android:paddingStart="16dp"
@@ -83,8 +83,8 @@
             android:layout_marginStart="32dp"
             android:layout_marginTop="16dp"
             android:layout_marginEnd="32dp"
-            android:backgroundTint="@color/midnight_blue"
             android:background="@drawable/rounded_edittext_background"
+            android:backgroundTint="@color/midnight_blue"
             android:hint="Password"
             android:inputType="textPassword"
             android:paddingStart="16dp"
@@ -151,11 +151,12 @@
             android:id="@+id/tvDontHaveAccount"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
+            android:layout_marginStart="2dp"
             android:layout_marginTop="32dp"
             android:text="Dont have an Account?"
             android:textColor="@color/white"
             android:textSize="20sp"
+            app:layout_constraintEnd_toStartOf="@+id/tvSignUp"
             app:layout_constraintHorizontal_chainStyle="packed"
             app:layout_constraintStart_toStartOf="@id/btnSignInGoogle"
             app:layout_constraintTop_toBottomOf="@id/btnSignInGoogle" />
@@ -165,11 +166,13 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="4dp"
+            android:layout_marginEnd="36dp"
             android:text="SIGN UP"
             android:textColor="@color/accent_red"
             android:textSize="20sp"
             android:textStyle="bold"
             app:layout_constraintBaseline_toBaselineOf="@id/tvDontHaveAccount"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@id/tvDontHaveAccount" />
 
         <TextView

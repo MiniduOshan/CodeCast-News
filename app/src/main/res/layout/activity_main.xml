@@ -26,8 +26,8 @@
 
     <ImageView
         android:id="@+id/imageView3"
-        android:layout_width="357dp"
-        android:layout_height="121dp"
+        android:layout_width="300dp"
+        android:layout_height="101dp"
         android:layout_marginStart="42dp"
         android:layout_marginTop="232dp"
         android:layout_marginEnd="42dp"
@@ -75,6 +75,7 @@
         android:indeterminate="false"
         android:max="100"
         android:progress="0"
+        android:progressTint="#0000FF"
         app:layout_constraintBottom_toTopOf="@+id/textView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.497"
