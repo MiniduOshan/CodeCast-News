@@ -17,17 +17,33 @@
         android:layout_gravity="center_horizontal"
         android:layout_marginBottom="16dp"/>
 
-    <EditText
-        android:id="@+id/newPhoneNumberEditText"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Enter new phone number"
-        android:inputType="phone"
-        android:padding="12dp"
-        android:background="@drawable/rounded_edittext_background1"
-        android:textColor="@android:color/black"
-        android:textColorHint="#888888"
-        android:layout_marginBottom="24dp"/>
+        android:orientation="horizontal"
+        android:layout_marginBottom="24dp">
+
+        <Spinner
+            android:id="@+id/countryCodeSpinner"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/rounded_edittext_background1"
+            android:padding="12dp"
+            android:layout_marginEnd="8dp" />
+
+        <EditText
+            android:id="@+id/newPhoneNumberEditText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="Enter phone number"
+            android:inputType="phone"
+            android:padding="12dp"
+            android:background="@drawable/rounded_edittext_background1"
+            android:textColor="@android:color/black"
+            android:textColorHint="#888888" />
+
+    </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"

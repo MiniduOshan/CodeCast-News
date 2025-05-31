@@ -43,6 +43,7 @@ dependencies {
     implementation(libs.constraintlayout)
 
 
+
     // Firebase BOM (Bill of Materials) - This manages Firebase versions automatically
     // It's crucial to use the latest Firebase BOM version. Check Firebase documentation for updates.
     implementation(platform("com.google.firebase:firebase-bom:32.8.1")) // **Check for the latest stable BOM version!**
@@ -65,4 +66,6 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+
+
 }

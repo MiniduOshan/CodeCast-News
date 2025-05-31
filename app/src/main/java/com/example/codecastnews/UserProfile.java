@@ -1,22 +1,34 @@
 package com.example.codecastnews;
 
-import android.content.Intent; // Import for Intent
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.annotation.NonNull; // <--- ADD THIS IMPORT
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.button.MaterialButton;
-import com.google.firebase.auth.FirebaseAuth; // Import for Firebase Auth (if you're using it for sign out)
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.UserProfileChangeRequest;
 
-// Import statements for your dialogs from the new package
 import com.example.codecastnews.dialogs.ChangePasswordDialogFragment;
 import com.example.codecastnews.dialogs.EditEmailDialogFragment;
 import com.example.codecastnews.dialogs.EditNameDialogFragment;
@@ -36,9 +48,13 @@ public class UserProfile extends AppCompatActivity implements
     private EditText passwordEditText;
     private MaterialButton signOutButton;
     private ImageView backArrow;
-
-    // Optional: If you're using Firebase for authentication, declare FirebaseAuth
+    private ImageView profileImage;
+    private ConstraintLayout editPhotoContainer;
+    private Spinner countryCodeSpinner;
+    private String selectedCountryCode = "+1"; // Default country code
     private FirebaseAuth mAuth;
+    private ActivityResultLauncher<String> mGetContent;
+    private SharedPreferences prefs;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,43 +62,79 @@ public class UserProfile extends AppCompatActivity implements
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_user_profile);
 
+        prefs = getSharedPreferences("UserProfilePrefs", MODE_PRIVATE);
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
 
-        // Initialize Firebase Auth (if used)
         mAuth = FirebaseAuth.getInstance();
 
-        // Initialize UI elements
         nameEditText = findViewById(R.id.nameEditText);
         phoneNumberEditText = findViewById(R.id.phoneNumberEditText);
         emailEditText = findViewById(R.id.emailEditText);
         passwordEditText = findViewById(R.id.passwordEditText);
         signOutButton = findViewById(R.id.signOutButton);
         backArrow = findViewById(R.id.backArrow);
+        profileImage = findViewById(R.id.profileImage);
+        editPhotoContainer = findViewById(R.id.editPhotoContainer);
+        countryCodeSpinner = findViewById(R.id.countryCodeSpinner);
 
-        // Set OnClickListener for nameEditText
+        String[] countryCodes = {"+1", "+44", "+91", "+94", "+86", "+33", "+61", "+81", "+49", "+27"};
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, countryCodes);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        countryCodeSpinner.setAdapter(adapter);
+        countryCodeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                selectedCountryCode = countryCodes[position];
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                selectedCountryCode = "+1"; // Default
+            }
+        });
+
+        // Restore saved data from SharedPreferences
+        String savedName = prefs.getString("name", "");
+        nameEditText.setText(savedName);
+
+        String savedEmail = prefs.getString("email", "");
+        emailEditText.setText(savedEmail);
+
+        String savedPhoneNumber = prefs.getString("phoneNumber", "");
+        String savedCountryCode = prefs.getString("countryCode", "+1");
+        phoneNumberEditText.setText(savedPhoneNumber);
+        selectedCountryCode = savedCountryCode;
+        int spinnerPosition = adapter.getPosition(savedCountryCode);
+        if (spinnerPosition >= 0) {
+            countryCodeSpinner.setSelection(spinnerPosition);
+        } else {
+            countryCodeSpinner.setSelection(0);
+        }
+
         nameEditText.setOnClickListener(v -> showEditNameDialog());
-
-        // Set OnClickListener for phoneNumberEditText
         phoneNumberEditText.setOnClickListener(v -> showEditPhoneNumberDialog());
-
-        // Set OnClickListener for emailEditText
         emailEditText.setOnClickListener(v -> showEditEmailDialog());
-
-        // Set OnClickListener for passwordEditText to show Change Password dialog
         passwordEditText.setOnClickListener(v -> showChangePasswordDialog());
-
-        // Set OnClickListener for signOutButton
         signOutButton.setOnClickListener(v -> showSignOutDialog());
-
-        // Optional: Add a click listener for the back arrow
+        editPhotoContainer.setOnClickListener(v -> pickImage());
         backArrow.setOnClickListener(v -> onBackPressed());
+
+        mGetContent = registerForActivityResult(new ActivityResultContracts.GetContent(),
+                uri -> {
+                    if (uri != null) {
+                        profileImage.setImageURI(uri);
+                        Toast.makeText(UserProfile.this, "Profile picture updated!", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(UserProfile.this, "No image selected.", Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
-    // --- Dialog Display Methods ---
     private void showEditNameDialog() {
         String currentName = nameEditText.getText().toString();
         EditNameDialogFragment dialog = EditNameDialogFragment.newInstance(currentName);
@@ -92,7 +144,7 @@ public class UserProfile extends AppCompatActivity implements
 
     private void showEditPhoneNumberDialog() {
         String currentPhoneNumber = phoneNumberEditText.getText().toString();
-        EditPhoneNumberDialogFragment dialog = EditPhoneNumberDialogFragment.newInstance(currentPhoneNumber);
+        EditPhoneNumberDialogFragment dialog = EditPhoneNumberDialogFragment.newInstance(currentPhoneNumber, selectedCountryCode);
         dialog.setEditPhoneNumberDialogListener(this);
         dialog.show(getSupportFragmentManager(), "EditPhoneNumberDialog");
     }
@@ -116,25 +168,69 @@ public class UserProfile extends AppCompatActivity implements
         dialog.show(getSupportFragmentManager(), "SignOutDialog");
     }
 
-    // --- Dialog Callback Implementations ---
+    private void pickImage() {
+        mGetContent.launch("image/*");
+    }
 
     @Override
     public void onNameSave(String newName) {
         if (!newName.isEmpty()) {
-            nameEditText.setText(newName);
-            Toast.makeText(this, "Name updated to: " + newName, Toast.LENGTH_SHORT).show();
-            // Save to persistent storage (e.g., SharedPreferences, database)
+            FirebaseUser user = mAuth.getCurrentUser();
+            if (user != null) {
+                UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
+                        .setDisplayName(newName)
+                        .build();
+
+                user.updateProfile(profileUpdates)
+                        .addOnCompleteListener(new OnCompleteListener<Void>() {
+                            @Override
+                            public void onComplete(@NonNull Task<Void> task) {
+                                if (task.isSuccessful()) {
+                                    // Update successful in Firebase
+                                    nameEditText.setText(newName);
+                                    // Also save to SharedPreferences for immediate local consistency
+                                    SharedPreferences.Editor editor = prefs.edit();
+                                    editor.putString("name", newName);
+                                    editor.apply();
+                                    Toast.makeText(UserProfile.this, "Name updated in Firebase and locally!", Toast.LENGTH_SHORT).show();
+                                } else {
+                                    Toast.makeText(UserProfile.this, "Failed to update name in Firebase: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                        });
+            } else {
+                Toast.makeText(this, "No authenticated user to update name.", Toast.LENGTH_SHORT).show();
+                nameEditText.setText(newName); // Still update locally if no Firebase user
+                SharedPreferences.Editor editor = prefs.edit();
+                editor.putString("name", newName);
+                editor.apply();
+            }
         } else {
             Toast.makeText(this, "Name cannot be empty", Toast.LENGTH_SHORT).show();
         }
     }
 
+
     @Override
-    public void onPhoneNumberSave(String newPhoneNumber) {
+    public void onPhoneNumberSave(String newPhoneNumber, String countryCode) {
         if (!newPhoneNumber.isEmpty()) {
             phoneNumberEditText.setText(newPhoneNumber);
-            Toast.makeText(this, "Phone Number updated to: " + newPhoneNumber, Toast.LENGTH_SHORT).show();
-            // Save to persistent storage
+            selectedCountryCode = countryCode != null ? countryCode : "+1";
+            ArrayAdapter<String> adapter = (ArrayAdapter<String>) countryCodeSpinner.getAdapter();
+            if (adapter != null) {
+                int spinnerPosition = adapter.getPosition(selectedCountryCode);
+                if (spinnerPosition >= 0) {
+                    countryCodeSpinner.setSelection(spinnerPosition);
+                } else {
+                    countryCodeSpinner.setSelection(0);
+                }
+            }
+            // Save to SharedPreferences
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putString("phoneNumber", newPhoneNumber);
+            editor.putString("countryCode", selectedCountryCode);
+            editor.apply();
+            Toast.makeText(this, "Phone Number updated to: " + selectedCountryCode + newPhoneNumber, Toast.LENGTH_SHORT).show();
         } else {
             Toast.makeText(this, "Phone Number cannot be empty", Toast.LENGTH_SHORT).show();
         }
@@ -143,9 +239,32 @@ public class UserProfile extends AppCompatActivity implements
     @Override
     public void onEmailSave(String newEmail) {
         if (!newEmail.isEmpty() && android.util.Patterns.EMAIL_ADDRESS.matcher(newEmail).matches()) {
-            emailEditText.setText(newEmail);
-            Toast.makeText(this, "Email updated to: " + newEmail, Toast.LENGTH_SHORT).show();
-            // Save to persistent storage
+            FirebaseUser user = mAuth.getCurrentUser();
+            if (user != null) {
+                user.updateEmail(newEmail)
+                        .addOnCompleteListener(new OnCompleteListener<Void>() {
+                            @Override
+                            public void onComplete(@NonNull Task<Void> task) {
+                                if (task.isSuccessful()) {
+                                    // Email updated in Firebase
+                                    emailEditText.setText(newEmail);
+                                    // Also save to SharedPreferences for immediate local consistency
+                                    SharedPreferences.Editor editor = prefs.edit();
+                                    editor.putString("email", newEmail);
+                                    editor.apply();
+                                    Toast.makeText(UserProfile.this, "Email updated in Firebase and locally!", Toast.LENGTH_SHORT).show();
+                                } else {
+                                    Toast.makeText(UserProfile.this, "Failed to update email in Firebase: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                        });
+            } else {
+                Toast.makeText(this, "No authenticated user to update email.", Toast.LENGTH_SHORT).show();
+                emailEditText.setText(newEmail); // Still update locally if no Firebase user
+                SharedPreferences.Editor editor = prefs.edit();
+                editor.putString("email", newEmail);
+                editor.apply();
+            }
         } else {
             Toast.makeText(this, "Please enter a valid email address", Toast.LENGTH_SHORT).show();
         }
@@ -153,33 +272,39 @@ public class UserProfile extends AppCompatActivity implements
 
     @Override
     public void onChangePassword(String currentPassword, String newPassword, String confirmNewPassword) {
-        // In a real app, you'd verify currentPassword with your backend/auth service
-        // and then update the password.
         if (newPassword.isEmpty() || confirmNewPassword.isEmpty()) {
             Toast.makeText(this, "New password fields cannot be empty", Toast.LENGTH_SHORT).show();
         } else if (!newPassword.equals(confirmNewPassword)) {
             Toast.makeText(this, "New passwords do not match", Toast.LENGTH_SHORT).show();
         } else {
-            // Simulate successful password change
-            Toast.makeText(this, "Password changed successfully!", Toast.LENGTH_SHORT).show();
-            // You might want to clear the passwordEditText or keep it showing "**********"
+            FirebaseUser user = mAuth.getCurrentUser();
+            if (user != null) {
+                user.updatePassword(newPassword)
+                        .addOnCompleteListener(task -> {
+                            if (task.isSuccessful()) {
+                                Toast.makeText(UserProfile.this, "Password changed successfully!", Toast.LENGTH_SHORT).show();
+                            } else {
+                                Toast.makeText(UserProfile.this, "Failed to change password: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                            }
+                        });
+            } else {
+                Toast.makeText(this, "No authenticated user to change password.", Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
     @Override
     public void onSignOutConfirm() {
         Toast.makeText(this, "Signing out...", Toast.LENGTH_SHORT).show();
-
-        // Implement your actual sign-out logic here.
-        // If using Firebase Authentication:
         if (mAuth != null) {
             mAuth.signOut();
         }
-
-        // Redirect to SignInScreen and clear the back stack
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.clear();
+        editor.apply();
         Intent intent = new Intent(UserProfile.this, SignInScreen.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
-        finish(); // Finish the current UserProfile activity
+        finish();
     }
 }
