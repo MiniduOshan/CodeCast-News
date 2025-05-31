@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "508969198380",
+    "firebase_url": "https://codecast-news-default-rtdb.firebaseio.com",
+    "project_id": "codecast-news",
+    "storage_bucket": "codecast-news.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:508969198380:android:8543b037b811e3c5754289",
+        "android_client_info": {
+          "package_name": "com.example.codecastnews"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "508969198380-hstm46mhnqu960bpj411nk8tvmb739sq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDQG-EEuV6j7MMHl91f80AoWVdMbXYxB1o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "508969198380-5oafb7l6118ec8g5vh0p5bikomlb1245.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

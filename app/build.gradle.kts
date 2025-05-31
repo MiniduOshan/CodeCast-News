@@ -1,6 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.google.gms.google.services)
+    alias(libs.plugins.google.gms.google.services) // Apply the Google Services plugin
 }
 
 android {
@@ -34,15 +34,30 @@ android {
 
 dependencies {
 
+    // AndroidX Libraries
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
-    implementation(libs.firebase.database)
-    implementation(libs.firebase.auth)
-    implementation(libs.credentials)
-    implementation(libs.credentials.play.services.auth)
-    implementation(libs.googleid)
+
+    // Firebase BOM (Bill of Materials) - ALWAYS check for the latest stable version
+    // Find the latest version here: https://firebase.google.com/docs/android/setup#available-libraries
+    implementation(platform("com.google.firebase:firebase-bom:32.8.1")) // Check this for updates!
+
+    // Firebase Authentication (Email/Password)
+    implementation("com.google.firebase:firebase-auth")
+
+    // Google Sign-In (if used for authentication)
+    implementation(libs.play.services.auth)
+
+    // Firebase Realtime Database
+    implementation("com.google.firebase:firebase-database")
+
+    // Glide for image loading
+    implementation(libs.glide)
+    annotationProcessor(libs.glide.compiler) // ESSENTIAL for Glide to work correctly
+
+    // Testing dependencies
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
