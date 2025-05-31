@@ -101,8 +101,6 @@ public class SignInScreen extends AppCompatActivity {
         });
     }
 
-    // No changes needed in onStart if you want explicit sign-in
-
     private void signInUser() {
         String email = etEmail.getText().toString().trim();
         String password = etPassword.getText().toString().trim();
@@ -126,7 +124,6 @@ public class SignInScreen extends AppCompatActivity {
                             Log.d("SignInScreen", "signInWithEmail:success");
                             FirebaseUser user = mAuth.getCurrentUser();
                             Toast.makeText(SignInScreen.this, "Authentication Successful.", Toast.LENGTH_SHORT).show();
-                            // Call this method to update SharedPreferences with current user data
                             updateSharedPreferencesWithFirebaseUser(user);
                             updateUI(user);
                         } else {
@@ -172,7 +169,6 @@ public class SignInScreen extends AppCompatActivity {
                             Log.d("SignInScreen", "firebaseAuthWithGoogle:success");
                             FirebaseUser user = mAuth.getCurrentUser();
                             Toast.makeText(SignInScreen.this, "Google Sign-In Successful.", Toast.LENGTH_SHORT).show();
-                            // Call this method to update SharedPreferences with current user data
                             updateSharedPreferencesWithFirebaseUser(user);
                             updateUI(user);
                         } else {
@@ -186,55 +182,18 @@ public class SignInScreen extends AppCompatActivity {
     }
 
     /**
-     * Updates SharedPreferences with the user's display name and email obtained from FirebaseUser.
-     * This method is crucial upon ANY successful sign-in (email/password or Google)
-     * to ensure UserProfile always reads the latest (or initial) data.
-     *
-     * IMPORTANT: This method now explicitly clears existing 'name' and 'email'
-     * in SharedPreferences BEFORE saving the Firebase user's current display name and email.
-     * This prevents stale data if a user's display name changes in Firebase directly,
-     * or if they previously had a name saved locally that isn't reflected in Firebase.
-     *
-     * For edited names: If you want *local edits* to persist *above* what Firebase provides
-     * on login, then you should save the edited name/email to a *separate* mechanism (e.g.,
-     * a tiny Firebase Realtime Database node specific to that user's profile data) rather
-     * than relying solely on `displayName` from Firebase Auth.
-     *
-     * However, based on your current setup where `UserProfile` edits update `SharedPreferences`
-     * and Firebase `displayName` (in `SignUpScreen`), the simplest approach for login
-     * is to re-sync from Firebase to SharedPreferences.
-     *
-     * If a user *edits their name in UserProfile*, that change IS saved to SharedPreferences.
-     * The issue is when you log out, SharedPreferences is cleared. When you log back in,
-     * this method will re-populate SharedPreferences with what's in FirebaseUser's
-     * displayName.
-     *
-     * If you want the *local edit* to persist even if Firebase `displayName` is not updated
-     * (which is currently what `onNameSave` in `UserProfile` does, it only updates local SP,
-     * not Firebase Auth's `displayName` for existing users), then you have a few options:
-     *
-     * 1. **Update Firebase `displayName` on every `onNameSave` and `onEmailSave` in `UserProfile`:**
-     * This is the most robust approach. The edited name/email always lives in Firebase.
-     * Then, `updateSharedPreferencesWithFirebaseUser` will always pull the correct,
-     * most up-to-date name/email from Firebase.
-     *
-     * 2. **Do not clear SharedPreferences on logout (less secure):**
-     * This is generally discouraged as it leaves user data on the device.
-     *
-     * Let's implement option 1, as it's the standard and most reliable way to handle
-     * profile data persistence across sessions and devices.
-     *
+     * Updates SharedPreferences with the user's display name, email, and phone number
+     * obtained from FirebaseUser if available. Prioritizes Firebase phone number.
      */
     private void updateSharedPreferencesWithFirebaseUser(FirebaseUser user) {
         if (user != null) {
             SharedPreferences.Editor editor = prefs.edit();
 
-            // Always get the latest data from FirebaseUser and save it to SharedPreferences
-            // This ensures SharedPreferences reflects Firebase's current state on login.
             String name = user.getDisplayName();
             String email = user.getEmail();
+            String firebasePhoneNumber = user.getPhoneNumber(); // Get phone number from FirebaseUser
 
-            // Handle potential null values for displayName (e.g., for very old accounts or specific providers)
+            // Handle potential null values for name and email
             if (name == null) {
                 name = "";
             }
@@ -244,9 +203,40 @@ public class SignInScreen extends AppCompatActivity {
 
             editor.putString("name", name);
             editor.putString("email", email);
-            // editor.putString("phoneNumber", user.getPhoneNumber()); // FirebaseUser.getPhoneNumber() is often null unless explicitly set via phone auth.
+
+            // --- Phone Number Handling Logic ---
+            String storedPhoneNumber = prefs.getString("phoneNumber", ""); // Get existing local number
+            String storedCountryCode = prefs.getString("countryCode", "+1"); // Get existing local code
+
+            if (firebasePhoneNumber != null && !firebasePhoneNumber.isEmpty()) {
+                // If Firebase has a phone number, use it and attempt to parse country code.
+                boolean foundCode = false;
+                // Add more country codes if your spinner list has more
+                String[] countryCodes = {"+1", "+44", "+91", "+94", "+86", "+33", "+61", "+81", "+49", "+27"};
+                for (String code : countryCodes) {
+                    if (firebasePhoneNumber.startsWith(code)) {
+                        storedCountryCode = code;
+                        storedPhoneNumber = firebasePhoneNumber.substring(code.length());
+                        foundCode = true;
+                        break;
+                    }
+                }
+                if (!foundCode) {
+                    // If no known country code prefix found, use the whole number as is.
+                    // Keep the current/default country code as it's likely set by UserProfile.
+                    storedPhoneNumber = firebasePhoneNumber;
+                }
+            }
+            // ELSE: If firebasePhoneNumber is null/empty, we keep the 'storedPhoneNumber'
+            // and 'storedCountryCode' which were initialized from prefs.getString().
+            // This ensures locally entered numbers persist if Firebase doesn't have one.
+
+            editor.putString("phoneNumber", storedPhoneNumber);
+            editor.putString("countryCode", storedCountryCode);
+            // --- End Phone Number Handling ---
+
             editor.apply();
-            Log.d("SignInScreen", "SharedPreferences updated after sign-in: Name='" + name + "', Email='" + email + "'");
+            Log.d("SignInScreen", "SharedPreferences updated after sign-in: Name='" + name + "', Email='" + email + "', Phone='" + storedCountryCode + storedPhoneNumber + "'");
         }
     }
 

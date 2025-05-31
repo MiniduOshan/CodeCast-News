@@ -4,8 +4,9 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.TextUtils;
+// Add this import statement:
+import android.widget.EditText; // <-- ADD THIS LINE
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -116,12 +117,37 @@ public class SignUpScreen extends AppCompatActivity {
                                 SharedPreferences.Editor editor = prefs.edit();
                                 editor.putString("name", name);
                                 editor.putString("email", email);
+
+                                // --- Phone Number Handling Logic ---
+                                String firebasePhoneNumber = user.getPhoneNumber(); // Get phone number from FirebaseUser
+                                String storedPhoneNumber = prefs.getString("phoneNumber", ""); // Get existing local number
+                                String storedCountryCode = prefs.getString("countryCode", "+1"); // Get existing local code
+
+                                if (firebasePhoneNumber != null && !firebasePhoneNumber.isEmpty()) {
+                                    boolean foundCode = false;
+                                    String[] countryCodes = {"+1", "+44", "+91", "+94", "+86", "+33", "+61", "+81", "+49", "+27"};
+                                    for (String code : countryCodes) {
+                                        if (firebasePhoneNumber.startsWith(code)) {
+                                            storedCountryCode = code;
+                                            storedPhoneNumber = firebasePhoneNumber.substring(code.length());
+                                            foundCode = true;
+                                            break;
+                                        }
+                                    }
+                                    if (!foundCode) {
+                                        storedPhoneNumber = firebasePhoneNumber;
+                                    }
+                                }
+                                // If firebasePhoneNumber is null/empty, 'storedPhoneNumber' and 'storedCountryCode'
+                                // remain as initialized from prefs.getString(), ensuring local data persists.
+
+                                editor.putString("phoneNumber", storedPhoneNumber);
+                                editor.putString("countryCode", storedCountryCode);
+                                // --- End Phone Number Handling ---
+
                                 editor.apply();
 
-                                // --- CHANGE STARTS HERE ---
-                                Intent intent = new Intent(SignUpScreen.this, NewsScreen.class); // Changed to NewsScreen.class
-                                // --- CHANGE ENDS HERE ---
-
+                                Intent intent = new Intent(SignUpScreen.this, NewsScreen.class);
                                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                                 startActivity(intent);
                                 finish();

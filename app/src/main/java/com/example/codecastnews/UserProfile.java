@@ -20,7 +20,7 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
-import androidx.annotation.NonNull; // <--- ADD THIS IMPORT
+import androidx.annotation.NonNull;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -105,16 +105,20 @@ public class UserProfile extends AppCompatActivity implements
         String savedEmail = prefs.getString("email", "");
         emailEditText.setText(savedEmail);
 
+        // Retrieve saved phone number and country code
         String savedPhoneNumber = prefs.getString("phoneNumber", "");
-        String savedCountryCode = prefs.getString("countryCode", "+1");
+        String savedCountryCode = prefs.getString("countryCode", "+1"); // Default to "+1" if not found
         phoneNumberEditText.setText(savedPhoneNumber);
-        selectedCountryCode = savedCountryCode;
+        selectedCountryCode = savedCountryCode; // Update the selectedCountryCode variable
+
+        // Set the spinner to the saved country code
         int spinnerPosition = adapter.getPosition(savedCountryCode);
         if (spinnerPosition >= 0) {
             countryCodeSpinner.setSelection(spinnerPosition);
         } else {
-            countryCodeSpinner.setSelection(0);
+            countryCodeSpinner.setSelection(0); // Default to the first item if code not found
         }
+
 
         nameEditText.setOnClickListener(v -> showEditNameDialog());
         phoneNumberEditText.setOnClickListener(v -> showEditPhoneNumberDialog());
@@ -144,6 +148,7 @@ public class UserProfile extends AppCompatActivity implements
 
     private void showEditPhoneNumberDialog() {
         String currentPhoneNumber = phoneNumberEditText.getText().toString();
+        // Pass the currently displayed country code to the dialog
         EditPhoneNumberDialogFragment dialog = EditPhoneNumberDialogFragment.newInstance(currentPhoneNumber, selectedCountryCode);
         dialog.setEditPhoneNumberDialogListener(this);
         dialog.show(getSupportFragmentManager(), "EditPhoneNumberDialog");
@@ -205,8 +210,6 @@ public class UserProfile extends AppCompatActivity implements
                 editor.putString("name", newName);
                 editor.apply();
             }
-        } else {
-            Toast.makeText(this, "Name cannot be empty", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -215,22 +218,29 @@ public class UserProfile extends AppCompatActivity implements
     public void onPhoneNumberSave(String newPhoneNumber, String countryCode) {
         if (!newPhoneNumber.isEmpty()) {
             phoneNumberEditText.setText(newPhoneNumber);
-            selectedCountryCode = countryCode != null ? countryCode : "+1";
+            selectedCountryCode = countryCode != null ? countryCode : "+1"; // Ensure selectedCountryCode is updated
             ArrayAdapter<String> adapter = (ArrayAdapter<String>) countryCodeSpinner.getAdapter();
             if (adapter != null) {
                 int spinnerPosition = adapter.getPosition(selectedCountryCode);
                 if (spinnerPosition >= 0) {
                     countryCodeSpinner.setSelection(spinnerPosition);
                 } else {
-                    countryCodeSpinner.setSelection(0);
+                    countryCodeSpinner.setSelection(0); // Default to first item if code not found
                 }
             }
-            // Save to SharedPreferences
+            // Save to SharedPreferences for persistence
             SharedPreferences.Editor editor = prefs.edit();
             editor.putString("phoneNumber", newPhoneNumber);
             editor.putString("countryCode", selectedCountryCode);
-            editor.apply();
+            editor.apply(); // Crucial line to save the data
             Toast.makeText(this, "Phone Number updated to: " + selectedCountryCode + newPhoneNumber, Toast.LENGTH_SHORT).show();
+
+            // NOTE: If you want to update Firebase Auth's phone number,
+            // this requires a complex re-authentication/verification flow
+            // with PhoneAuthCredential. This simple onPhoneNumberSave
+            // typically only updates local SharedPreferences.
+            // If you need Firebase Auth to reflect the change, you'll need
+            // to implement that more advanced logic.
         } else {
             Toast.makeText(this, "Phone Number cannot be empty", Toast.LENGTH_SHORT).show();
         }
@@ -299,8 +309,14 @@ public class UserProfile extends AppCompatActivity implements
         if (mAuth != null) {
             mAuth.signOut();
         }
+        // IMPORTANT: Clear only Firebase-derived data (name, email) on sign out.
+        // DO NOT clear phone number and country code, as they are locally managed
+        // unless you specifically want them cleared.
         SharedPreferences.Editor editor = prefs.edit();
-        editor.clear();
+        editor.remove("name");
+        editor.remove("email");
+        // editor.remove("phoneNumber"); // Keep commented out if you want it to persist locally
+        // editor.remove("countryCode"); // Keep commented out if you want it to persist locally
         editor.apply();
         Intent intent = new Intent(UserProfile.this, SignInScreen.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
