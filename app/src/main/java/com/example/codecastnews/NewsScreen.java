@@ -3,7 +3,7 @@ package com.example.codecastnews;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.util.Log;
+import android.util.Log; // Make sure this import is present
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -40,7 +40,7 @@ import java.util.List;
  */
 public class NewsScreen extends AppCompatActivity {
 
-    // TAG for logging messages
+    // TAG for logging messages - USE THIS TO FILTER LOGCAT
     private static final String TAG = "NewsScreen";
 
     // UI components declarations
@@ -58,8 +58,8 @@ public class NewsScreen extends AppCompatActivity {
     private TextView featuredNewsTitle;
     private TextView featuredNewsDate;
     private TextView sectionTitleTextView;
-    private ImageView profileIcon; // Declaring profileIcon
-    private ImageView featuredNewsShare; // Declaring share icon
+    private ImageView profileIcon;
+    private ImageView featuredNewsShare;
 
     // Bottom Navigation Tab Layouts and their child views
     private LinearLayout navAcademic, navSport, navEvent;
@@ -107,8 +107,8 @@ public class NewsScreen extends AppCompatActivity {
         featuredNewsTitle = findViewById(R.id.featuredNewsTitle);
         featuredNewsDate = findViewById(R.id.featuredNewsDate);
         sectionTitleTextView = findViewById(R.id.sectionTitleTextView);
-        profileIcon = findViewById(R.id.profileIcon); // Initialize profileIcon
-        featuredNewsShare = findViewById(R.id.featuredNewsShare); // Initialize share icon
+        profileIcon = findViewById(R.id.profileIcon);
+        featuredNewsShare = findViewById(R.id.featuredNewsShare);
 
         // Set OnClickListener for the profileIcon to open UserProfile
         profileIcon.setOnClickListener(v -> {
@@ -200,12 +200,14 @@ public class NewsScreen extends AppCompatActivity {
         if (intent != null && intent.hasExtra(NewsDetailScreen.EXTRA_SELECTED_CATEGORY)) {
             String category = intent.getStringExtra(NewsDetailScreen.EXTRA_SELECTED_CATEGORY);
             if (category != null && !category.isEmpty()) {
+                Log.d(TAG, "handleIntent: Received category from intent: " + category);
                 selectTab(category); // Select the tab corresponding to the received category
                 // Clear the extra from the intent to prevent it from being re-processed
                 // if the activity is resumed again without a new intent.
                 intent.removeExtra(NewsDetailScreen.EXTRA_SELECTED_CATEGORY);
             }
         } else {
+            Log.d(TAG, "handleIntent: No specific category in intent. Selecting default/current: " + currentNewsType);
             // If no specific category is passed, ensure the default or last selected tab is active.
             // This covers cases where NewsScreen is launched normally or resumed without a category intent.
             selectTab(currentNewsType);
@@ -230,6 +232,7 @@ public class NewsScreen extends AppCompatActivity {
         // Filter the main news list and update the RecyclerView with articles
         // that match the selected type and are NOT featured.
         filterNewsByType(type);
+        Log.d(TAG, "selectTab: Selected category: " + type);
     }
 
     /**
@@ -245,7 +248,13 @@ public class NewsScreen extends AppCompatActivity {
             // Check if the article matches the current category AND is marked as featured for that category
             if (categoryType.equalsIgnoreCase(article.getType()) && article.isFeaturedForCategory()) {
                 featuredArticleForCategory = article;
-                break;
+                // Log the details of the featured article being selected for display
+                Log.d(TAG, "FEATURED_ARTICLE_SELECTION: Category=" + categoryType +
+                        ", Selected Article ID=" + article.getId() +
+                        ", Title='" + article.getTitle() + "'" +
+                        ", Type=" + article.getType() +
+                        ", ImageName (from model)=" + article.getImageName());
+                break; // Found the featured article, no need to continue looping
             }
         }
 
@@ -258,23 +267,30 @@ public class NewsScreen extends AppCompatActivity {
             featuredNewsDate.setText("Date: " + articleToDisplay.getDate());
 
             // Get the resource ID of the image from the drawable folder using its name
+            String imageName = articleToDisplay.getImageName(); // Get the image name from the article object
             int featuredImageResId = getResources().getIdentifier(
-                    articleToDisplay.getImageName(),
+                    imageName, // Use the imageName from the article object
                     "drawable",
                     getPackageName()
             );
+
+            // Log the image loading attempt
+            Log.d(TAG, "GLIDE_LOADING_DEBUG: Attempting to load image '" + imageName +
+                    "' for featured card of category '" + categoryType + "'");
 
             // Load the image using Glide for efficient image loading
             if (featuredImageResId != 0) {
                 Glide.with(NewsScreen.this)
                         .load(featuredImageResId)
-                        .placeholder(R.drawable.placeholder_image)
-                        .error(R.drawable.error_image)
+                        .placeholder(R.drawable.placeholder_image) // Ensure you have this drawable
+                        .error(R.drawable.error_image) // Ensure you have this drawable
                         .into(featuredNewsImage);
+                Log.d(TAG, "GLIDE_LOADING_DEBUG: Resource ID found for '" + imageName + "': " + featuredImageResId);
             } else {
                 // If the image resource is not found, display a default "no image" placeholder
-                featuredNewsImage.setImageResource(R.drawable.no_image_available);
-                Log.w(TAG, "Featured image for " + categoryType + " not found: " + articleToDisplay.getImageName());
+                featuredNewsImage.setImageResource(R.drawable.no_image_available); // Ensure you have this drawable
+                Log.e(TAG, "GLIDE_LOADING_ERROR: Drawable not found for '" + imageName +
+                        "' in category '" + categoryType + "'. Showing default image.");
             }
 
             // Set OnClickListener for the featured news card to open NewsDetailScreen
@@ -282,14 +298,17 @@ public class NewsScreen extends AppCompatActivity {
                 Intent intent = new Intent(NewsScreen.this, NewsDetailScreen.class);
                 intent.putExtra(NewsDetailScreen.EXTRA_NEWS_ARTICLE, articleToDisplay);
                 startActivity(intent);
+                Log.d(TAG, "Featured card clicked: " + articleToDisplay.getTitle());
             });
 
         } else {
             // If no featured article is found for the current category, display a default message
-            featuredNewsTitle.setText("No Featured News for " + capitalizeFirstLetter(categoryType));
+            String noFeaturedMessage = "No Featured News for " + capitalizeFirstLetter(categoryType);
+            featuredNewsTitle.setText(noFeaturedMessage);
             featuredNewsDate.setText("");
             featuredNewsImage.setImageResource(R.drawable.no_image_available);
             featuredNewsCard.setOnClickListener(null); // Disable click listener
+            Log.d(TAG, "updateFeaturedNewsCard: No featured article found for category: " + categoryType);
         }
     }
 
@@ -302,17 +321,19 @@ public class NewsScreen extends AppCompatActivity {
      */
     private void filterNewsByType(String type) {
         filteredNewsList.clear();
-
+        int nonFeaturedCount = 0;
         // Iterate through all news articles
         for (NewsArticle article : allNewsList) {
             // Add article to filtered list if its type matches the selected type
             // AND it is NOT a featured article for its category
             if (type.equalsIgnoreCase(article.getType()) && !article.isFeaturedForCategory()) {
                 filteredNewsList.add(article);
+                nonFeaturedCount++;
             }
         }
         Collections.shuffle(filteredNewsList); // Optional: Shuffle the filtered list for varied display
         newsAdapter.updateNewsList(filteredNewsList); // Update the RecyclerView adapter with the new list
+        Log.d(TAG, "filterNewsByType: Filtered " + nonFeaturedCount + " non-featured articles for category: " + type);
     }
 
     /**
@@ -345,6 +366,7 @@ public class NewsScreen extends AppCompatActivity {
                 textEvent.setTextColor(SELECTED_COLOR);
                 break;
         }
+        Log.d(TAG, "setSelectedTabColor: Tab '" + selectedType + "' highlighted.");
     }
 
     /**
@@ -371,6 +393,7 @@ public class NewsScreen extends AppCompatActivity {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 allNewsList.clear(); // Clear the master list to prevent duplicate data
+                Log.d(TAG, "onDataChange: Fetching news from Firebase. DataSnapshot children count: " + dataSnapshot.getChildrenCount());
 
                 // Iterate through each child node (which represents a NewsArticle)
                 for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
@@ -379,8 +402,18 @@ public class NewsScreen extends AppCompatActivity {
                     if (article != null) {
                         article.setId(postSnapshot.getKey()); // Set the Firebase unique key as the article ID
                         allNewsList.add(article); // Add the article to the master list
+                        // Log the details of each article as it's read from Firebase
+                        Log.d(TAG, "FIREBASE_DATA_READ: ID=" + article.getId() +
+                                ", Title='" + article.getTitle() + "'" +
+                                ", Type=" + article.getType() +
+                                ", Featured=" + article.isFeaturedForCategory() +
+                                ", ImageName=" + article.getImageName());
+                    } else {
+                        Log.w(TAG, "FIREBASE_DATA_READ: Could not parse article from snapshot: " + postSnapshot.getKey());
                     }
                 }
+                Log.d(TAG, "onDataChange: Total articles loaded: " + allNewsList.size());
+
                 // After fetching all news, call handleIntent to process any incoming category selection
                 // This ensures the UI is populated correctly based on the intent after data is available.
                 handleIntent(getIntent());

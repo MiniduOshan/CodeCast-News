@@ -40,12 +40,13 @@
                 android:id="@+id/profileTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="28dp"
                 android:text="Profile"
                 android:textColor="@android:color/white"
-                android:textSize="20sp"
+                android:textSize="24sp"
                 android:textStyle="bold"
-                android:layout_marginTop="24dp"
                 app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.498"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
@@ -93,10 +94,10 @@
                         android:padding="0dp"
                         android:scaleType="centerCrop"
                         android:src="@drawable/dp_user"
-                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintBottom_toTopOf="@+id/editPhotoText"
                         app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:layout_constraintBottom_toTopOf="@+id/editPhotoText" />
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
 
                     <TextView
                         android:id="@+id/editPhotoText"
@@ -105,11 +106,11 @@
                         android:layout_marginTop="8dp"
                         android:text="Edit Photo"
                         android:textColor="@android:color/white"
-                        android:textSize="16sp"
+                        android:textSize="20sp"
+                        app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/profileImage"
-                        app:layout_constraintBottom_toBottomOf="parent" />
+                        app:layout_constraintTop_toBottomOf="@id/profileImage" />
 
                 </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -118,7 +119,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="24dp"
-                    android:layout_marginTop="24dp"
+                    android:layout_marginTop="28dp"
                     android:text="Name"
                     android:textColor="@android:color/white"
                     android:textSize="16sp"
@@ -130,7 +131,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="24dp"
-                    android:layout_marginTop="28dp"
+                    android:layout_marginTop="16dp"
                     android:layout_marginEnd="24dp"
                     android:background="@drawable/rounded_edittext_background1"
                     android:focusable="false"
@@ -143,7 +144,7 @@
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintHorizontal_bias="0.0"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/nameLabel" />
+                    app:layout_constraintTop_toBottomOf="@+id/nameLabel" />
 
                 <TextView
                     android:id="@+id/phoneNumberLabel"
@@ -176,16 +177,16 @@
                     android:layout_marginTop="8dp"
                     android:layout_marginEnd="24dp"
                     android:background="@drawable/rounded_edittext_background1"
+                    android:focusable="false"
+                    android:focusableInTouchMode="true"
                     android:hint="Enter phone number"
                     android:inputType="phone"
                     android:padding="12dp"
                     android:textColor="@android:color/black"
                     android:textColorHint="#000000"
-                    app:layout_constraintStart_toEndOf="@id/countryCodeSpinner"
                     app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/phoneNumberLabel"
-                    android:focusable="false"
-                    android:focusableInTouchMode="true" />
+                    app:layout_constraintStart_toEndOf="@id/countryCodeSpinner"
+                    app:layout_constraintTop_toBottomOf="@id/phoneNumberLabel" />
 
                 <TextView
                     android:id="@+id/emailLabel"
@@ -207,6 +208,8 @@
                     android:layout_marginTop="8dp"
                     android:layout_marginEnd="24dp"
                     android:background="@drawable/rounded_edittext_background1"
+                    android:focusable="false"
+                    android:focusableInTouchMode="true"
                     android:hint="leonscott@gmail.com"
                     android:inputType="textEmailAddress"
                     android:padding="12dp"
@@ -214,9 +217,7 @@
                     android:textColorHint="#000000"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/emailLabel"
-                    android:focusable="false"
-                    android:focusableInTouchMode="true" />
+                    app:layout_constraintTop_toBottomOf="@id/emailLabel" />
 
                 <TextView
                     android:id="@+id/changePasswordLabel"
@@ -239,6 +240,8 @@
                     android:layout_marginEnd="24dp"
                     android:layout_marginBottom="24dp"
                     android:background="@drawable/rounded_edittext_background1"
+                    android:focusable="false"
+                    android:focusableInTouchMode="true"
                     android:hint="**********"
                     android:inputType="textPassword"
                     android:padding="12dp"
@@ -248,9 +251,7 @@
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintHorizontal_bias="0.0"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/changePasswordLabel"
-                    android:focusable="false"
-                    android:focusableInTouchMode="true" />
+                    app:layout_constraintTop_toBottomOf="@id/changePasswordLabel" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 

@@ -50,7 +50,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:layout_weight="1"
-            android:text="Sunday, April 27"
+            android:text="Sunday, June 1"
             android:textColor="#B0BEC5"
             android:textSize="16sp" />
 
@@ -82,6 +82,27 @@
             android:elevation="8dp"
             android:orientation="vertical"
             android:paddingBottom="20dp">
+
+            <TextView
+                android:id="@+id/detailNewsTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:paddingHorizontal="20dp"
+                android:text="New Degree Program in Artificial Intelligence Launched"
+                android:textColor="@android:color/white"
+                android:textSize="26sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/detailNewsDate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:paddingHorizontal="20dp"
+                android:text="Date: April 26, 2025"
+                android:textColor="#B0BEC5"
+                android:textSize="14sp" />
 
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
@@ -137,26 +158,6 @@
 
             </LinearLayout>
 
-            <TextView
-                android:id="@+id/detailNewsTitle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
-                android:paddingHorizontal="20dp"
-                android:text="Loading News Title..."
-                android:textColor="@android:color/white"
-                android:textSize="26sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/detailNewsDate"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:paddingHorizontal="20dp"
-                android:text="Date: Loading..."
-                android:textColor="#B0BEC5"
-                android:textSize="14sp" />
 
             <TextView
                 android:id="@+id/detailNewsContent"
@@ -164,9 +165,9 @@
                 android:layout_height="wrap_content"
                 android:lineSpacingExtra="4dp"
                 android:paddingHorizontal="20dp"
-                android:text="Loading news content..."
+                android:text="The Faculty of Technology at the University of Colombo has launched a new Bachelor of Science Honours in Artificial Intelligence degree program, commencing from the 2025/26 academic year. This innovative program is designed to equip students with in-depth knowledge and practical skills in the fields of artificial intelligence, machine learning, data science, and intelligent systems. The curriculum integrates theoretical foundations, hands-on projects, and industry collaboration, ensuring students are well-prepared for careers in AI research, development, and applications across multiple industries."
                 android:textColor="@android:color/white"
-                android:textSize="16sp" />
+                android:textSize="20sp" />
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
