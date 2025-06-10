@@ -1,6 +1,6 @@
 # CodeCast News
 
-**CodeCast News** is a modern Android application built with **Java** that delivers real-time news articles to users. With intuitive design, robust Firebase integration, and secure user authentication, it offers a seamless experience for browsing, reading, and managing news content.
+**CodeCast News** is a modern Android application built with **Java** that delivers real-time news articles to users. With intuitive design, robust Firebase integration, and secure user authentication, it offers a seamless experience for browsing, reading, and managing news content. The app supports full **CRUD** operations (Create, Read, Update, Delete) on user data, powered by Firebase Realtime Database.
 
 ---
 
