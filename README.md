@@ -22,21 +22,22 @@
   Manage app preferences and configuration.
 
 - **User Profile Management**  
-  Edit personal information such as email, name, and phone number. Users can also securely change their passwords.
+  Users can edit personal information such as email, name, and phone number and securely change their passwords.
 
 - **Developer Info Screen**  
   Displays application version details and developer information.
 
 - **Realtime Data Updates**  
-  News content and user data are updated in realtime using **Firebase Realtime Database**.
+  News content and user data are updated in real-time using **Firebase Realtime Database**.
 
 - **Interactive Dialogs**  
-  Custom dialog fragments for tasks such as password changes, email/phone edits, and sign-out confirmations.
+  Custom dialogue fragments include password changes, name/Profile PIcture/phone edits, and sign-out confirmations.
 
 - **Responsive UI**  
   Adaptive layout ensures an optimal experience across various Android devices.
 
 ---
+
 
 ## 📁 Project Structure
 
@@ -106,6 +107,14 @@ res/
 | Gradle                  | Build automation                         |
 
 ---
+
+
+## Login Details(For Testing)
+Email- miniduoshan@gmail.com
+Password- minidu1234
+
+Also, you can create a new account using Signup
+
 
 ## 👨‍💻 Developer Info
 
