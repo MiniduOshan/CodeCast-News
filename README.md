@@ -110,8 +110,8 @@ res/
 
 
 ## Login Details(For Testing)
-Email- miniduoshan@gmail.com
-Password- minidu1234
+- **Email**: miniduoshan@gmail.com
+- **Password**: minidu1234
 
 Also, you can create a new account using Signup
 
