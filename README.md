@@ -18,7 +18,7 @@
 - **News Detail**  
   View comprehensive information about each article.
 
-- **Search Functionality**
+- **Search Functionality**  
   Enable users to find news articles by keywords or phrases quickly.
   
 - **Settings Screen**  
