@@ -36,13 +36,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <ImageView
-            android:id="@+id/searchIcon"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:contentDescription="Search"
-            android:src="@drawable/ic_search_category_default"
-            android:tint="#B0BEC5" />
 
         <TextView
             android:id="@+id/dateTextView"
@@ -50,6 +43,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:layout_weight="1"
+            android:text="Let's Explore"
             android:textColor="#B0BEC5"
             android:textSize="16sp" />
 

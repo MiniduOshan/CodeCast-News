@@ -13,8 +13,13 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:background="@drawable/rounded_search_background" android:paddingVertical="12dp"  android:paddingHorizontal="16dp" android:gravity="center_vertical"
-        android:layout_marginHorizontal="16dp" android:layout_marginTop="16dp" app:layout_constraintTop_toTopOf="parent"
+        android:background="@drawable/rounded_search_background"
+        android:paddingVertical="12dp"
+        android:paddingHorizontal="16dp"
+        android:gravity="center_vertical"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="16dp"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
@@ -26,20 +31,41 @@
             android:tint="#B0BEC5"
             android:contentDescription="Search" />
 
-        <TextView
-            android:id="@+id/dateTextView"
+        <EditText
+            android:id="@+id/searchInput"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginStart="8dp" />
-
-        <ImageView
-            android:id="@+id/profileIcon"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:src="@drawable/generic_avatar"
-
-            android:contentDescription="User Profile" />
+            android:layout_marginStart="8dp"
+            android:hint="Search news..."
+            android:textColor="@android:color/white"
+            android:textColorHint="#B0BEC5"
+            android:background="@android:color/transparent"
+            android:maxLines="1"
+            android:singleLine="true"
+            android:imeOptions="actionSearch"
+            android:inputType="text"
+            android:visibility="gone" /> <TextView
+        android:id="@+id/dateTextView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="8dp"
+        android:textColor="#B0BEC5"
+        android:text="Date Placeholder" /> <ImageView
+        android:id="@+id/closeSearchIcon"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:src="@drawable/ic_close"
+        android:tint="#B0BEC5"
+        android:contentDescription="Close Search"
+        android:visibility="gone" /> <ImageView
+        android:id="@+id/profileIcon"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:src="@drawable/generic_avatar"
+        android:layout_marginStart="8dp"
+        android:contentDescription="User Profile" />
 
     </LinearLayout>
 

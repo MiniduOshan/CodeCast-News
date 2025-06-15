@@ -1,9 +1,16 @@
 package com.example.codecastnews;
 
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.util.Log; // Make sure this import is present
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.util.Log;
+import android.view.View;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -28,9 +35,12 @@ import com.google.firebase.database.ValueEventListener;
 import com.example.codecastnews.adapters.NewsAdapter;
 import com.example.codecastnews.models.NewsArticle;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * NewsScreen Activity: Displays a list of news articles categorized by type (Academic, Sport, Event).
@@ -60,6 +70,10 @@ public class NewsScreen extends AppCompatActivity {
     private TextView sectionTitleTextView;
     private ImageView profileIcon;
     private ImageView featuredNewsShare;
+    private ImageView searchIcon;
+    private EditText searchInput; // New: Search input field
+    private TextView dateTextView; // Existing: Used for current date display
+    private ImageView closeSearchIcon; // New: Icon to close search
 
     // Bottom Navigation Tab Layouts and their child views
     private LinearLayout navAcademic, navSport, navEvent;
@@ -68,6 +82,7 @@ public class NewsScreen extends AppCompatActivity {
 
     // State Variable: Keeps track of the currently selected news category
     private String currentNewsType = "academic"; // Default selected news category is "academic"
+    private boolean isSearchMode = false; // New: State to track if search is active
 
     // UI Constants for colors
     private final int SELECTED_COLOR = Color.WHITE; // Color for selected tab elements
@@ -110,11 +125,58 @@ public class NewsScreen extends AppCompatActivity {
         profileIcon = findViewById(R.id.profileIcon);
         featuredNewsShare = findViewById(R.id.featuredNewsShare);
 
+        // Initialize Search and Date/Profile Bar elements
+        searchIcon = findViewById(R.id.searchIcon);
+        searchInput = findViewById(R.id.searchInput); // Initialize the EditText
+        dateTextView = findViewById(R.id.dateTextView); // Initialize dateTextView
+        closeSearchIcon = findViewById(R.id.closeSearchIcon); // Initialize closeSearchIcon
+
+        // Set current date on dateTextView
+        SimpleDateFormat sdf = new SimpleDateFormat("EEE, MMM dd", Locale.getDefault());
+        String currentDate = sdf.format(new Date());
+        dateTextView.setText(currentDate);
+
         // Set OnClickListener for the profileIcon to open UserProfile
         profileIcon.setOnClickListener(v -> {
             Intent intent = new Intent(NewsScreen.this, SettingScreen.class);
             startActivity(intent);
         });
+
+        // Search Icon Click Listener (toggles search mode)
+        searchIcon.setOnClickListener(v -> toggleSearchMode(true));
+
+        // Close Search Icon Click Listener (exits search mode)
+        closeSearchIcon.setOnClickListener(v -> toggleSearchMode(false));
+
+        // TextWatcher for search input: Filters news as user types
+        searchInput.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                // Not used
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                // Filter the news list as text changes
+                filterNewsBySearch(s.toString());
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                // Not used
+            }
+        });
+
+        // Handle keyboard search action (e.g., when user presses "Enter" on keyboard)
+        searchInput.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                filterNewsBySearch(v.getText().toString());
+                hideKeyboard(); // Hide keyboard after search
+                return true;
+            }
+            return false;
+        });
+
 
         // Set click listener for share icon
         featuredNewsShare.setOnClickListener(v -> {
@@ -165,12 +227,103 @@ public class NewsScreen extends AppCompatActivity {
     }
 
     /**
-     * Called when the activity receives a new Intent. This happens if the activity is already
-     * running in the current task and a new Intent is delivered to it (e.g., from NewsDetailScreen
-     * with FLAG_ACTIVITY_SINGLE_TOP).
-     *
-     * @param intent The new intent that was started for the activity.
+     * Toggles the search mode, showing/hiding search input and related UI elements.
+     * @param enableSearch true to enable search mode, false to disable.
      */
+    private void toggleSearchMode(boolean enableSearch) {
+        isSearchMode = enableSearch;
+        if (enableSearch) {
+            // Enable search mode
+            dateTextView.setVisibility(View.GONE);      // Hide date
+            profileIcon.setVisibility(View.GONE);      // Hide profile icon
+            searchInput.setVisibility(View.VISIBLE);   // Show search input
+            closeSearchIcon.setVisibility(View.VISIBLE); // Show close search icon
+
+            // Hide section title and featured card in search mode
+            sectionTitleTextView.setVisibility(View.GONE);
+            featuredNewsCard.setVisibility(View.GONE);
+            // Hide bottom navigation when search is active
+            findViewById(R.id.bottomNavigationView).setVisibility(View.GONE);
+
+
+            searchInput.requestFocus(); // Set focus to search input
+            showKeyboard(); // Show keyboard automatically
+
+            // Initially show all articles or clear previous search results
+            filterNewsBySearch("");
+        } else {
+            // Disable search mode
+            dateTextView.setVisibility(View.VISIBLE);    // Show date
+            profileIcon.setVisibility(View.VISIBLE);     // Show profile icon
+            searchInput.setVisibility(View.GONE);      // Hide search input
+            closeSearchIcon.setVisibility(View.GONE);  // Hide close search icon
+            searchInput.setText(""); // Clear any text in search input
+
+            hideKeyboard(); // Hide keyboard
+
+            // Restore original view (section title, featured card, filtered news)
+            sectionTitleTextView.setVisibility(View.VISIBLE);
+            featuredNewsCard.setVisibility(View.VISIBLE);
+            findViewById(R.id.bottomNavigationView).setVisibility(View.VISIBLE); // Show bottom navigation again
+            selectTab(currentNewsType); // Re-apply the current category filter
+        }
+    }
+
+    /**
+     * Filters the news list based on the search query.
+     * This method searches across all news articles for the query, regardless of category.
+     * @param query The search string.
+     */
+    private void filterNewsBySearch(String query) {
+        filteredNewsList.clear();
+        if (query.isEmpty()) {
+            // If the query is empty in search mode, display all non-featured articles
+            // This is useful if the user clears the search but remains in search mode.
+            for (NewsArticle article : allNewsList) {
+                // In an empty search, we can show all non-featured items or just items relevant to current category.
+                // For simplicity, when search is active and empty, let's show all non-featured articles from all categories.
+                // If you want it to show non-featured of only current category, adjust this logic.
+                if (!article.isFeaturedForCategory()) { // Show all non-featured if search is empty
+                    filteredNewsList.add(article);
+                }
+            }
+        } else {
+            // Filter by query (case-insensitive) across title and description
+            String lowerCaseQuery = query.toLowerCase();
+            for (NewsArticle article : allNewsList) {
+                if (article.getTitle().toLowerCase().contains(lowerCaseQuery) ||
+                        article.getDescription().toLowerCase().contains(lowerCaseQuery) ||
+                        article.getType().toLowerCase().contains(lowerCaseQuery) // Optional: search by category name too
+                ) {
+                    filteredNewsList.add(article);
+                }
+            }
+        }
+        Collections.shuffle(filteredNewsList); // Optional: Shuffle search results for varied display
+        newsAdapter.updateNewsList(filteredNewsList); // Update RecyclerView
+        Log.d(TAG, "filterNewsBySearch: Filtered " + filteredNewsList.size() + " articles for query: '" + query + "'");
+    }
+
+    /**
+     * Shows the soft keyboard.
+     */
+    private void showKeyboard() {
+        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (imm != null) {
+            imm.showSoftInput(searchInput, InputMethodManager.SHOW_IMPLICIT);
+        }
+    }
+
+    /**
+     * Hides the soft keyboard.
+     */
+    private void hideKeyboard() {
+        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (imm != null && getCurrentFocus() != null) {
+            imm.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+        }
+    }
+
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
@@ -178,15 +331,34 @@ public class NewsScreen extends AppCompatActivity {
         handleIntent(intent); // Process the new intent
     }
 
-    /**
-     * Called when the activity is becoming visible to the user.
-     * We call handleIntent here to ensure that if NewsScreen is brought to the foreground
-     * (e.g., from background), it processes any pending category selection from the intent.
-     */
     @Override
     protected void onResume() {
         super.onResume();
-        handleIntent(getIntent()); // Process the intent when the activity resumes
+        // Handle intent on resume to ensure correct tab/state, especially after returning from NewsDetailScreen
+        handleIntent(getIntent());
+
+        // If the activity resumes and we are in search mode, ensure the keyboard is still visible if input is focused.
+        // Or you might choose to exit search mode on resume if that's preferred.
+        if (isSearchMode && searchInput.isFocused()) {
+            showKeyboard();
+        } else if (isSearchMode && !searchInput.isFocused()){
+            // If in search mode but somehow focus is lost, re-focus and show keyboard
+            searchInput.requestFocus();
+            showKeyboard();
+        }
+    }
+
+    /**
+     * Overrides the default back button behavior.
+     * If in search mode, pressing back will exit search mode. Otherwise, it behaves normally.
+     */
+    @Override
+    public void onBackPressed() {
+        if (isSearchMode) {
+            toggleSearchMode(false); // Exit search mode on back press
+        } else {
+            super.onBackPressed(); // Default back button behavior
+        }
     }
 
     /**
@@ -196,21 +368,22 @@ public class NewsScreen extends AppCompatActivity {
      * @param intent The intent that started or resumed this activity.
      */
     private void handleIntent(Intent intent) {
-        // Check if the intent contains the EXTRA_SELECTED_CATEGORY from NewsDetailScreen
-        if (intent != null && intent.hasExtra(NewsDetailScreen.EXTRA_SELECTED_CATEGORY)) {
-            String category = intent.getStringExtra(NewsDetailScreen.EXTRA_SELECTED_CATEGORY);
-            if (category != null && !category.isEmpty()) {
-                Log.d(TAG, "handleIntent: Received category from intent: " + category);
-                selectTab(category); // Select the tab corresponding to the received category
-                // Clear the extra from the intent to prevent it from being re-processed
-                // if the activity is resumed again without a new intent.
-                intent.removeExtra(NewsDetailScreen.EXTRA_SELECTED_CATEGORY);
+        // Only process category selection if not in search mode
+        if (!isSearchMode) {
+            if (intent != null && intent.hasExtra(NewsDetailScreen.EXTRA_SELECTED_CATEGORY)) {
+                String category = intent.getStringExtra(NewsDetailScreen.EXTRA_SELECTED_CATEGORY);
+                if (category != null && !category.isEmpty()) {
+                    Log.d(TAG, "handleIntent: Received category from intent: " + category);
+                    selectTab(category); // Select the tab corresponding to the received category
+                    // Clear the extra from the intent to prevent it from being re-processed
+                    // if the activity is resumed again without a new intent.
+                    intent.removeExtra(NewsDetailScreen.EXTRA_SELECTED_CATEGORY);
+                }
+            } else {
+                Log.d(TAG, "handleIntent: No specific category in intent. Selecting default/current: " + currentNewsType);
+                // If no specific category is passed, ensure the default or last selected tab is active.
+                selectTab(currentNewsType);
             }
-        } else {
-            Log.d(TAG, "handleIntent: No specific category in intent. Selecting default/current: " + currentNewsType);
-            // If no specific category is passed, ensure the default or last selected tab is active.
-            // This covers cases where NewsScreen is launched normally or resumed without a category intent.
-            selectTab(currentNewsType);
         }
     }
 
@@ -222,6 +395,9 @@ public class NewsScreen extends AppCompatActivity {
      * @param type The type of news to display ("academic", "sport", "event").
      */
     private void selectTab(String type) {
+        if (isSearchMode) { // Prevent tab selection if in search mode
+            return;
+        }
         currentNewsType = type; // Update the state variable to the newly selected type
         sectionTitleTextView.setText(capitalizeFirstLetter(type)); // Set the section title (e.g., "Academic")
         setSelectedTabColor(type); // Update the colors of the bottom navigation tabs
@@ -243,12 +419,15 @@ public class NewsScreen extends AppCompatActivity {
      * @param categoryType The category to find the featured article for (e.g., "academic").
      */
     private void updateFeaturedNewsCard(String categoryType) {
+        if (isSearchMode) { // Don't update featured card if in search mode
+            return;
+        }
+
         NewsArticle featuredArticleForCategory = null;
         for (NewsArticle article : allNewsList) {
             // Check if the article matches the current category AND is marked as featured for that category
             if (categoryType.equalsIgnoreCase(article.getType()) && article.isFeaturedForCategory()) {
                 featuredArticleForCategory = article;
-                // Log the details of the featured article being selected for display
                 Log.d(TAG, "FEATURED_ARTICLE_SELECTION: Category=" + categoryType +
                         ", Selected Article ID=" + article.getId() +
                         ", Title='" + article.getTitle() + "'" +
@@ -274,7 +453,6 @@ public class NewsScreen extends AppCompatActivity {
                     getPackageName()
             );
 
-            // Log the image loading attempt
             Log.d(TAG, "GLIDE_LOADING_DEBUG: Attempting to load image '" + imageName +
                     "' for featured card of category '" + categoryType + "'");
 
@@ -320,6 +498,9 @@ public class NewsScreen extends AppCompatActivity {
      * @param type The type of news to display (e.g., "academic").
      */
     private void filterNewsByType(String type) {
+        if (isSearchMode) { // Don't filter by type if in search mode; search filters instead
+            return;
+        }
         filteredNewsList.clear();
         int nonFeaturedCount = 0;
         // Iterate through all news articles
@@ -402,7 +583,6 @@ public class NewsScreen extends AppCompatActivity {
                     if (article != null) {
                         article.setId(postSnapshot.getKey()); // Set the Firebase unique key as the article ID
                         allNewsList.add(article); // Add the article to the master list
-                        // Log the details of each article as it's read from Firebase
                         Log.d(TAG, "FIREBASE_DATA_READ: ID=" + article.getId() +
                                 ", Title='" + article.getTitle() + "'" +
                                 ", Type=" + article.getType() +
